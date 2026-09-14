@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import PageWrapper from "../../components/layout/PageWrapper";
 import { useAuth } from "../../hooks/useAuth";
-import api from "../../api/axios";
+import api, { errorMessage } from "../../api/axios";
 import toast from "react-hot-toast";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -18,9 +18,12 @@ const Profile = () => {
     setSaving(true);
     try {
       await api.put("/users/me/profile", { full_name: fullName });
+      // Re-read the user so the sidebar picks up the new name immediately;
+      // without this it kept showing the old one until a full page reload.
+      await refreshUser();
       toast.success("Profile updated");
     } catch (err) {
-      toast.error("Failed to update profile");
+      toast.error(errorMessage(err, "Could not update your profile."));
     } finally {
       setSaving(false);
     }
@@ -42,7 +45,7 @@ const Profile = () => {
       toast.success("Password changed");
       setOldPassword(""); setNewPassword(""); setConfirmPassword("");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to change password");
+      toast.error(errorMessage(err, "Could not change your password."));
     } finally {
       setChangingPw(false);
     }

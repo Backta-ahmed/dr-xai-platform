@@ -1,92 +1,123 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ROUTES } from "../../constants";
-import { useAuth } from "../../hooks/useAuth";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  UserCircle, 
-  LogOut,
+import {
   Eye,
-  Settings
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Users,
+  UserCircle,
+  X,
 } from "lucide-react";
 
-const Sidebar = () => {
+import { ROUTES } from "../../constants";
+import { useAuth } from "../../hooks/useAuth";
+
+const DOCTOR_LINKS = [
+  { name: "Dashboard", path: ROUTES.DASHBOARD, icon: LayoutDashboard, exact: true },
+  { name: "Patients", path: ROUTES.PATIENTS, icon: Users },
+  { name: "Reports", path: ROUTES.REPORTS, icon: FileText },
+  { name: "Profile", path: ROUTES.PROFILE, icon: UserCircle },
+];
+
+const ADMIN_LINKS = [
+  { name: "Admin Dashboard", path: ROUTES.ADMIN, icon: LayoutDashboard, exact: true },
+  { name: "Manage Doctors", path: `${ROUTES.ADMIN}/doctors`, icon: Users },
+  { name: "System Logs", path: `${ROUTES.ADMIN}/logs`, icon: FileText },
+  { name: "AI Model", path: `${ROUTES.ADMIN}/ai-model`, icon: Settings },
+];
+
+const Sidebar = ({ open = false, onClose = () => {} }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const links = user?.role === "admin" ? ADMIN_LINKS : DOCTOR_LINKS;
 
-  const doctorLinks = [
-    { name: "Dashboard", path: ROUTES.DASHBOARD, icon: LayoutDashboard },
-    { name: "Patients", path: ROUTES.PATIENTS, icon: Users },
-    { name: "Reports", path: ROUTES.REPORTS, icon: FileText },
-    { name: "Profile", path: ROUTES.PROFILE, icon: UserCircle },
-  ];
-
-  const adminLinks = [
-    { name: "Admin Dashboard", path: ROUTES.ADMIN, icon: LayoutDashboard },
-    { name: "Manage Doctors", path: ROUTES.ADMIN + "/doctors", icon: Users },
-    { name: "System Logs", path: ROUTES.ADMIN + "/logs", icon: FileText },
-    { name: "AI Model", path: ROUTES.ADMIN + "/ai-model", icon: Settings },
-  ];
-
-  const links = user?.role === "admin" ? adminLinks : doctorLinks;
+  const isActive = (link) =>
+    link.exact
+      ? location.pathname === link.path
+      : location.pathname.startsWith(link.path);
 
   return (
-    <div className="flex flex-col w-[240px] bg-cyprus text-white h-screen fixed top-0 left-0">
-      <div className="flex items-center justify-center h-20 border-b border-cyprus-light px-4">
-        <Eye className="mr-3" size={28} />
-        <h1 className="text-xl font-semibold tracking-tight">DR Platform</h1>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto py-4">
-        <nav className="space-y-1 px-2">
+    <>
+      {/* Scrim for the mobile drawer. Hidden from assistive tech; Escape and
+          the close button provide the accessible paths out. */}
+      {open && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        // Off-canvas below lg, pinned open from lg up. Width is 240px here and
+        // PageWrapper offsets by exactly the same amount.
+        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-col bg-cyprus text-white transition-transform duration-200 lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+        aria-label="Main navigation"
+      >
+        <div className="flex h-20 flex-shrink-0 items-center justify-between border-b border-cyprus-light px-4">
+          <div className="flex items-center">
+            <Eye className="mr-3" size={26} aria-hidden="true" />
+            <span className="text-lg font-semibold tracking-tight">DR Platform</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded p-1 text-gray-300 hover:bg-cyprus-light hover:text-white lg:hidden"
+            aria-label="Close navigation"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
           {links.map((link) => {
-            const isActive = location.pathname.startsWith(link.path) && 
-                             (link.path !== ROUTES.ADMIN || location.pathname === ROUTES.ADMIN) &&
-                             (link.path !== ROUTES.DASHBOARD || location.pathname === ROUTES.DASHBOARD);
+            const active = isActive(link);
             const Icon = link.icon;
-            
             return (
               <Link
                 key={link.name}
                 to={link.path}
-                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                  isActive 
-                    ? "bg-cyprus-light text-white" 
-                    : "text-gray-300 hover:bg-cyprus-light/50 hover:text-white"
+                onClick={onClose}
+                aria-current={active ? "page" : undefined}
+                className={`group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-cyprus-light text-white"
+                    : "text-gray-200 hover:bg-cyprus-light/50 hover:text-white"
                 }`}
               >
-                <Icon 
-                  className={`flex-shrink-0 mr-3 h-5 w-5 ${isActive ? "text-accent" : "text-gray-400 group-hover:text-gray-300"}`} 
-                  aria-hidden="true" 
+                <Icon
+                  className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                    active ? "text-accent" : "text-gray-300"
+                  }`}
+                  aria-hidden="true"
                 />
                 {link.name}
               </Link>
             );
           })}
         </nav>
-      </div>
-      
-      <div className="flex-shrink-0 flex border-t border-cyprus-light p-4">
-        <div className="flex-shrink-0 w-full group block">
+
+        <div className="flex-shrink-0 border-t border-cyprus-light p-4">
           <div className="flex items-center">
-            <div className="inline-block h-9 w-9 rounded-full bg-accent flex items-center justify-center text-white font-bold">
-              {user?.full_name?.charAt(0).toUpperCase()}
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent font-bold text-white">
+              {user?.full_name?.charAt(0).toUpperCase() ?? "?"}
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">{user?.full_name}</p>
-              <button 
+            <div className="ml-3 min-w-0">
+              <p className="truncate text-sm font-medium text-white">{user?.full_name}</p>
+              <button
                 onClick={logout}
-                className="text-xs font-medium text-gray-300 group-hover:text-white flex items-center mt-1"
+                className="mt-1 flex items-center text-xs font-medium text-gray-300 transition-colors hover:text-white"
               >
-                <LogOut size={12} className="mr-1" /> Logout
+                <LogOut size={12} className="mr-1" aria-hidden="true" /> Sign out
               </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </aside>
+    </>
   );
 };
 

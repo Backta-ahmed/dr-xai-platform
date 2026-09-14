@@ -12,13 +12,25 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.deps import get_current_doctor_user
+from app.api.deps import get_current_active_user, get_current_doctor_user
 from app.core.database import get_db
 from app.models.diagnosis import Diagnosis
 from app.models.patient import Patient
 from app.models.user import User
+from app.services.model_service import backend_info
 
 router = APIRouter()
+
+
+@router.get("/model")
+async def get_model_status(current_user: User = Depends(get_current_active_user)) -> dict:
+    """Which model backend is active, readable by any signed-in user.
+
+    The doctor-facing pages need this to decide whether to show the "simulated
+    output" warning before a diagnosis is run. The equivalent admin route is
+    admin-only, so querying that one from a doctor's session would 403.
+    """
+    return backend_info()
 
 # Stages 3 and 4 (Severe and Proliferative) are the referral-urgent ones.
 SEVERE_STAGE_THRESHOLD = 3

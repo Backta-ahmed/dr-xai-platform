@@ -1,8 +1,11 @@
 # ── Secrets ─────────────────────────────────────────────
 # Never commit real credentials. Use .env.example as the template.
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
+# Vite's .env.development / .env.production hold only the API base URL, no
+# secrets, and must be committed so a checkout builds correctly.
 *.pem
 *.key
 

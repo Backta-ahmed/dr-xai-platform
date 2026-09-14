@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Inter is loaded via <link> in index.html, which can use preconnect and does
+   not block CSS parsing the way an @import here does. Loading it in both places
+   fetched the same font twice. */
 @import "tailwindcss";
 
 @theme {
@@ -24,4 +26,25 @@
 
 body {
   @apply bg-sand text-gray-900 font-sans antialiased;
+}
+
+/* Respect the OS "reduce motion" setting. The app uses spinners, a GSAP intro
+   and hover transforms, which can trigger discomfort for motion-sensitive
+   users. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible keyboard focus everywhere. Several controls only styled :focus via
+   focus:ring on specific elements, leaving others with no visible indicator. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

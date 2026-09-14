@@ -2,6 +2,7 @@ import React, { useState, useLayoutEffect, useRef } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { ROUTES } from "../../constants";
+import { errorMessage } from "../../api/axios";
 import toast from "react-hot-toast";
 import { Eye } from "lucide-react";
 import gsap from "gsap";
@@ -52,7 +53,7 @@ const Login = () => {
         navigate(ROUTES.DASHBOARD);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to login. Check credentials.");
+      toast.error(errorMessage(error, "Could not sign in. Check your credentials."));
     } finally {
       setIsSubmitting(false);
     }

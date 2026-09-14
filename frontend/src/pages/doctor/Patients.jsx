@@ -1,123 +1,155 @@
-import React, { useEffect, useState } from "react";
-import PageWrapper from "../../components/layout/PageWrapper";
-import api from "../../api/axios";
-import DRStageBadge from "../../components/shared/DRStageBadge";
-import { formatDate } from "../../utils/helpers";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusCircle, Search } from "lucide-react";
+
+import PageWrapper from "../../components/layout/PageWrapper";
+import ErrorState from "../../components/shared/ErrorState";
+import api from "../../api/axios";
+import { useFetch } from "../../hooks/useFetch";
+import { formatDate } from "../../utils/helpers";
 
 const Patients = () => {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // `query` is what has actually been submitted; `search` is the input value.
+  // Keeping them separate means typing does not refetch.
   const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPatients = async (p = page, s = search) => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/patients/?page=${p}&limit=10&search=${s}`);
-      setPatients(res.data.items || []);
-      setTotalPages(res.data.pages || 1);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchPatients = useCallback(
+    () =>
+      // params, not string interpolation: a name containing & or # used to
+      // corrupt the query string.
+      api
+        .get("/patients/", { params: { page, limit: 10, search: query || undefined } })
+        .then((r) => r.data),
+    [page, query]
+  );
 
-  useEffect(() => {
-    fetchPatients();
-  }, [page]);
+  const { data, loading, error, reload: load } = useFetch(
+    fetchPatients,
+    [page, query],
+    "Could not load your patients."
+  );
+
+  const patients = data?.items ?? [];
+  const totalPages = data?.pages ?? 1;
 
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
-    fetchPatients(1, search);
+    setQuery(search.trim());
   };
 
   return (
     <PageWrapper title="Patients">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <form onSubmit={handleSearch} className="flex items-center bg-white rounded-lg shadow-card px-3 py-2 w-full sm:w-auto">
-          <Search size={18} className="text-gray-400 mr-2" />
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <form
+          onSubmit={handleSearch}
+          className="flex w-full items-center rounded-lg bg-white px-3 py-2 shadow-card sm:w-auto"
+          role="search"
+        >
+          <Search size={18} className="mr-2 text-gray-500" aria-hidden="true" />
           <input
-            type="text"
-            placeholder="Search patients..."
+            type="search"
+            placeholder="Search patients…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border-none outline-none bg-transparent text-sm w-64"
+            maxLength={100}
+            aria-label="Search patients by name"
+            className="w-full border-none bg-transparent text-sm outline-none sm:w-64"
           />
         </form>
         <button
           onClick={() => navigate("/patients/new")}
-          className="flex items-center px-4 py-2 bg-cyprus text-white rounded-lg hover:bg-cyprus-light transition-colors text-sm font-medium"
+          className="flex items-center rounded-lg bg-cyprus px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyprus-light"
         >
-          <PlusCircle size={18} className="mr-2" /> Add Patient
+          <PlusCircle size={18} className="mr-2" aria-hidden="true" /> Add patient
         </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-card overflow-hidden">
+      <div className="rounded-xl bg-white shadow-card">
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cyprus"></div>
+            <div
+              role="status"
+              aria-label="Loading"
+              className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
+            />
           </div>
+        ) : error ? (
+          <ErrorState message={error} onRetry={load} />
         ) : patients.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-lg">No patients found</p>
-            <p className="text-sm mt-1">Add your first patient to get started</p>
+          <div className="py-16 text-center">
+            <p className="text-lg text-gray-700">
+              {query ? `No patients match “${query}”.` : "No patients yet"}
+            </p>
+            <p className="mt-1 text-sm text-gray-600">
+              {query ? "Try a different name." : "Add your first patient to get started."}
+            </p>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-sand">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diabetes Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {patients.map((patient, idx) => (
-                <tr key={patient.id} className={idx % 2 === 0 ? "bg-white" : "bg-sand-light"}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.full_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(patient.date_of_birth)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{patient.diabetes_type || "—"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.phone || "—"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => navigate(`/patients/${patient.id}`)}
-                      className="text-accent hover:text-cyprus font-medium transition-colors"
-                    >
-                      View
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-sand">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Date of birth</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Diabetes type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {patients.map((patient, idx) => (
+                  <tr key={patient.id} className={idx % 2 === 0 ? "bg-white" : "bg-sand-light"}>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                      {patient.full_name}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
+                      {formatDate(patient.date_of_birth)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-600">
+                      {patient.diabetes_type || "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
+                      {patient.phone || "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm">
+                      <button
+                        onClick={() => navigate(`/patients/${patient.id}`)}
+                        className="font-medium text-accent transition-colors hover:text-cyprus"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-6 space-x-4">
+      {!loading && !error && totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center space-x-4">
           <button
-            onClick={() => setPage(Math.max(1, page - 1))}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 bg-white rounded-lg shadow-card disabled:opacity-30 hover:bg-sand transition-colors"
+            className="rounded-lg bg-white p-2 shadow-card transition-colors hover:bg-sand disabled:opacity-30"
+            aria-label="Previous page"
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+          <span className="text-sm text-gray-700">
+            Page {page} of {totalPages}
+          </span>
           <button
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-2 bg-white rounded-lg shadow-card disabled:opacity-30 hover:bg-sand transition-colors"
+            className="rounded-lg bg-white p-2 shadow-card transition-colors hover:bg-sand disabled:opacity-30"
+            aria-label="Next page"
           >
             <ChevronRight size={18} />
           </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PageWrapper from "../../components/layout/PageWrapper";
-import api from "../../api/axios";
+import ErrorState from "../../components/shared/ErrorState";
+import api, { errorMessage } from "../../api/axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -9,6 +10,8 @@ const NewPatient = () => {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingPatient, setLoadingPatient] = useState(Boolean(id));
+  const [loadError, setLoadError] = useState(null);
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     full_name: "",
@@ -21,20 +24,40 @@ const NewPatient = () => {
   });
 
   useEffect(() => {
-    if (isEdit) {
-      api.get(`/patients/${id}`).then((res) => {
+    if (!isEdit) return;
+    let cancelled = false;
+
+    // Previously this had no .catch: a failed load left the form silently blank,
+    // and submitting it would overwrite the real record with empty values.
+    const loadPatient = async () => {
+      setLoadingPatient(true);
+      setLoadError(null);
+      try {
+        const res = await api.get(`/patients/${id}`);
+        if (cancelled) return;
         const p = res.data;
         setForm({
           full_name: p.full_name || "",
           date_of_birth: p.date_of_birth || "",
           gender: p.gender || "",
           diabetes_type: p.diabetes_type || "",
-          diabetes_duration_years: p.diabetes_duration_years || "",
+          diabetes_duration_years: p.diabetes_duration_years ?? "",
           phone: p.phone || "",
           notes: p.notes || "",
         });
-      });
-    }
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(errorMessage(err, "This patient could not be loaded."));
+        }
+      } finally {
+        if (!cancelled) setLoadingPatient(false);
+      }
+    };
+
+    loadPatient();
+    return () => {
+      cancelled = true;
+    };
   }, [id, isEdit]);
 
   const handleChange = (e) => {
@@ -59,8 +82,9 @@ const NewPatient = () => {
     
     setSubmitting(true);
     const payload = { ...form };
-    if (payload.diabetes_duration_years) {
-      payload.diabetes_duration_years = parseInt(payload.diabetes_duration_years);
+    const years = parseInt(payload.diabetes_duration_years, 10);
+    if (Number.isFinite(years)) {
+      payload.diabetes_duration_years = years;
     } else {
       delete payload.diabetes_duration_years;
     }
@@ -78,7 +102,7 @@ const NewPatient = () => {
       }
       navigate("/patients");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to save patient");
+      toast.error(errorMessage(err, "Could not save this patient."));
     } finally {
       setSubmitting(false);
     }
@@ -86,6 +110,32 @@ const NewPatient = () => {
 
   const inputClass = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent text-sm";
   const errorInputClass = "border-danger focus:ring-danger focus:border-danger";
+
+  if (loadingPatient) {
+    return (
+      <PageWrapper title="Edit Patient">
+        <div className="flex justify-center py-20">
+          <div
+            role="status"
+            aria-label="Loading"
+            className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
+          />
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  // Refuse to show an editable form we could not populate — submitting it would
+  // overwrite the stored record with blanks.
+  if (loadError) {
+    return (
+      <PageWrapper title="Edit Patient">
+        <div className="mx-auto max-w-2xl rounded-xl bg-white shadow-card">
+          <ErrorState message={loadError} onRetry={() => window.location.reload()} />
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper title={isEdit ? "Edit Patient" : "Add New Patient"}>

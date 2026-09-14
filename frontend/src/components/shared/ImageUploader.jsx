@@ -1,27 +1,43 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import toast from "react-hot-toast";
 
-const ImageUploader = ({ onFileSelect, accept = "image/jpeg,image/png" }) => {
+const MAX_BYTES = 10 * 1024 * 1024;
+// Kept in step with ALLOWED_FORMATS in backend/app/services/storage_service.py.
+// These checks are a convenience so the user gets instant feedback; the server
+// re-validates by actually decoding the file, since anything here is bypassable.
+const ACCEPTED_TYPES = "image/jpeg,image/png,image/tiff,image/bmp,image/webp";
+
+const ImageUploader = ({ onFileSelect, accept = ACCEPTED_TYPES }) => {
   const [preview, setPreview] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef(null);
 
+  // Object URLs are not garbage collected on their own; without this the blob
+  // stays in memory for the lifetime of the tab.
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
   const handleFile = (file) => {
     if (!file) return;
-    
-    // Check MIME type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file (JPG, PNG)");
+
+    if (!ACCEPTED_TYPES.split(",").includes(file.type)) {
+      toast.error("Upload a JPG, PNG, TIFF, BMP or WEBP image.");
       return;
     }
-    
-    // Check file size
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size exceeds 10MB limit");
+
+    if (file.size > MAX_BYTES) {
+      toast.error("That image is larger than the 10MB limit.");
       return;
     }
-    setPreview(URL.createObjectURL(file));
+
+    setPreview((previous) => {
+      if (previous) URL.revokeObjectURL(previous);
+      return URL.createObjectURL(file);
+    });
     onFileSelect(file);
   };
 
@@ -40,7 +56,10 @@ const ImageUploader = ({ onFileSelect, accept = "image/jpeg,image/png" }) => {
   };
 
   const clearImage = () => {
-    setPreview(null);
+    setPreview((previous) => {
+      if (previous) URL.revokeObjectURL(previous);
+      return null;
+    });
     onFileSelect(null);
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -51,7 +70,9 @@ const ImageUploader = ({ onFileSelect, accept = "image/jpeg,image/png" }) => {
         <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white shadow-card">
           <img src={preview} alt="Retinal scan preview" className="w-full h-64 object-contain bg-black" />
           <button
+            type="button"
             onClick={clearImage}
+            aria-label="Remove the selected image"
             className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-red-50 transition-colors"
           >
             <X size={18} className="text-danger" />
@@ -72,7 +93,7 @@ const ImageUploader = ({ onFileSelect, accept = "image/jpeg,image/png" }) => {
           <p className="mt-3 text-sm text-gray-600">
             <span className="font-medium text-cyprus">Click to upload</span> or drag and drop
           </p>
-          <p className="mt-1 text-xs text-gray-400">JPG, PNG up to 10MB</p>
+          <p className="mt-1 text-xs text-gray-600">JPG, PNG, TIFF, BMP or WEBP, up to 10MB</p>
           <input
             ref={inputRef}
             type="file"
