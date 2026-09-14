@@ -16,6 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from email_validator import EmailNotValidError, validate_email  # noqa: E402
 from sqlalchemy.future import select  # noqa: E402
 
 from app.core.config import settings  # noqa: E402
@@ -50,6 +51,16 @@ async def seed() -> int:
         return 1
 
     email = settings.SEED_ADMIN_EMAIL.strip().lower()
+
+    # This script writes straight to the database, bypassing the Pydantic
+    # schemas the API validates against. Without this check a seeded address
+    # that EmailStr rejects (a reserved TLD such as .local, say) creates an
+    # account that can sign in but whose responses fail validation with a 500.
+    try:
+        validate_email(email, check_deliverability=False)
+    except EmailNotValidError as exc:
+        print(f"SEED_ADMIN_EMAIL is not a valid address: {exc}")
+        return 1
 
     # Tables come from `alembic upgrade head`, not create_all, so the schema
     # stays under migration control and matches what production will have.

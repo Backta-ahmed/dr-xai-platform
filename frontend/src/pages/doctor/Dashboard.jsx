@@ -68,7 +68,9 @@ const Dashboard = () => {
   }));
 
   return (
-    <PageWrapper title={`Welcome, Dr. ${user?.full_name ?? ""}`}>
+    // No hardcoded "Dr." prefix: full_name often already contains a title, which
+    // rendered as "Welcome, Dr. Dr Amina Belkacem".
+    <PageWrapper title={`Welcome, ${user?.full_name ?? ""}`}>
       {stats.simulated_diagnoses > 0 && <SimulationBanner variant="inline" className="mb-6" />}
 
       <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
