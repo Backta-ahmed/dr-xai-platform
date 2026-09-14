@@ -1,0 +1,62 @@
+# ── Secrets ─────────────────────────────────────────────
+# Never commit real credentials. Use .env.example as the template.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Databases ───────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Patient data / uploads ──────────────────────────────
+# Retinal scans are PHI. They belong in object storage, never in git.
+backend/uploads/
+uploads/
+*.dcm
+
+# ── Node / frontend ─────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# ── Test output ─────────────────────────────────────────
+api_results.json
+
+# ── Editors / OS ────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# ── Logs ────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
