@@ -62,28 +62,68 @@ async def seed() -> int:
         print(f"SEED_ADMIN_EMAIL is not a valid address: {exc}")
         return 1
 
+    # Optional demo doctor, so a local demo has both roles without clicking
+    # through the admin UI first. Never seeded in production, and the password
+    # still comes from the environment rather than being hardcoded.
+    doctor_email = os.getenv("SEED_DOCTOR_EMAIL", "").strip().lower()
+    doctor_password = os.getenv("SEED_DOCTOR_PASSWORD", "")
+    if doctor_email:
+        try:
+            validate_email(doctor_email, check_deliverability=False)
+        except EmailNotValidError as exc:
+            print(f"SEED_DOCTOR_EMAIL is not a valid address: {exc}")
+            return 1
+        if len(doctor_password) < 8:
+            print("SEED_DOCTOR_PASSWORD must be at least 8 characters.")
+            return 1
+
     # Tables come from `alembic upgrade head`, not create_all, so the schema
     # stays under migration control and matches what production will have.
+    created = []
     async with AsyncSessionLocal() as db:
         existing = await db.execute(select(User).where(User.email == email))
         if existing.scalars().first():
-            print(f"Admin {email} already exists. Nothing to do.")
-            return 0
-
-        db.add(
-            User(
-                full_name="System Administrator",
-                email=email,
-                password=get_password_hash(password),
-                role=UserRole.admin,
-                is_active=True,
+            print(f"Admin {email} already exists, leaving it alone.")
+        else:
+            db.add(
+                User(
+                    full_name="System Administrator",
+                    email=email,
+                    password=get_password_hash(password),
+                    role=UserRole.admin,
+                    is_active=True,
+                )
             )
-        )
+            created.append(f"admin  {email}")
+
+        if doctor_email:
+            existing_doc = await db.execute(
+                select(User).where(User.email == doctor_email)
+            )
+            if existing_doc.scalars().first():
+                print(f"Doctor {doctor_email} already exists, leaving it alone.")
+            else:
+                db.add(
+                    User(
+                        full_name=os.getenv("SEED_DOCTOR_NAME", "Dr Demo"),
+                        email=doctor_email,
+                        password=get_password_hash(doctor_password),
+                        role=UserRole.doctor,
+                        is_active=True,
+                    )
+                )
+                created.append(f"doctor {doctor_email}")
+
         await db.commit()
 
-    print(f"Admin account created: {email}")
-    print("Password is the one set in SEED_ADMIN_PASSWORD. It is not shown here.")
-    print("Sign in and create doctor accounts from Admin -> Manage Doctors.")
+    if not created:
+        print("Nothing to do.")
+        return 0
+
+    print("Created:")
+    for line in created:
+        print(f"  {line}")
+    print("Passwords are the ones set in the environment. They are not shown here.")
     return 0
 
 
