@@ -1,54 +1,80 @@
-"""
-Seed script — creates an admin and a demo doctor user.
+"""Create the initial admin account.
+
 Run once:  python seed.py
+
+The password comes from SEED_ADMIN_PASSWORD in .env and is never printed or
+hardcoded. The previous version created admin/admin123 and doctor/doctor123 and
+echoed both to the console; those accounts were pushed to a live database.
+
+Doctor accounts are not seeded. An admin creates them through the UI, which
+keeps every real account's password chosen by a human rather than by a script.
 """
+
 import asyncio
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from app.core.database import engine, AsyncSessionLocal, Base
-from app.core.security import get_password_hash
-from app.models.user import User, UserRole
+from sqlalchemy.future import select  # noqa: E402
 
-async def seed():
-    # Create tables if they don't exist
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+from app.core.config import settings  # noqa: E402
+from app.core.database import AsyncSessionLocal  # noqa: E402
+from app.core.security import get_password_hash  # noqa: E402
+from app.models.user import User, UserRole  # noqa: E402
 
+MIN_PASSWORD_LENGTH = 12
+
+
+async def seed() -> int:
+    if settings.is_production:
+        print(
+            "Refusing to seed: ENVIRONMENT is 'production'.\n"
+            "Create the first admin manually against the production database."
+        )
+        return 1
+
+    password = settings.SEED_ADMIN_PASSWORD
+    if not password:
+        print(
+            "SEED_ADMIN_PASSWORD is not set in backend/.env.\n"
+            "Set it to a strong password and run this again."
+        )
+        return 1
+
+    if len(password) < MIN_PASSWORD_LENGTH:
+        print(
+            f"SEED_ADMIN_PASSWORD is too short "
+            f"({len(password)} chars, minimum {MIN_PASSWORD_LENGTH})."
+        )
+        return 1
+
+    email = settings.SEED_ADMIN_EMAIL.strip().lower()
+
+    # Tables come from `alembic upgrade head`, not create_all, so the schema
+    # stays under migration control and matches what production will have.
     async with AsyncSessionLocal() as db:
-        # Check if admin exists
-        from sqlalchemy.future import select
-        result = await db.execute(select(User).where(User.email == "admin@drplatform.com"))
-        if result.scalars().first():
-            print("Seed data already exists. Skipping.")
-            return
+        existing = await db.execute(select(User).where(User.email == email))
+        if existing.scalars().first():
+            print(f"Admin {email} already exists. Nothing to do.")
+            return 0
 
-        # Create admin
-        admin = User(
-            full_name="System Admin",
-            email="admin@drplatform.com",
-            password=get_password_hash("admin123"),
-            role=UserRole.admin,
-            is_active=True,
+        db.add(
+            User(
+                full_name="System Administrator",
+                email=email,
+                password=get_password_hash(password),
+                role=UserRole.admin,
+                is_active=True,
+            )
         )
-        db.add(admin)
-
-        # Create demo doctor
-        doctor = User(
-            full_name="Dr. Sarah Ahmed",
-            email="doctor@drplatform.com",
-            password=get_password_hash("doctor123"),
-            role=UserRole.doctor,
-            is_active=True,
-        )
-        db.add(doctor)
-
         await db.commit()
-        print("✅ Seed data created successfully!")
-        print("   Admin:  admin@drplatform.com  / admin123")
-        print("   Doctor: doctor@drplatform.com / doctor123")
+
+    print(f"Admin account created: {email}")
+    print("Password is the one set in SEED_ADMIN_PASSWORD. It is not shown here.")
+    print("Sign in and create doctor accounts from Admin -> Manage Doctors.")
+    return 0
+
 
 if __name__ == "__main__":
-    asyncio.run(seed())
+    raise SystemExit(asyncio.run(seed()))

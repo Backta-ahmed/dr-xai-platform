@@ -1,28 +1,52 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
-class DiagnosisBase(BaseModel):
-    dr_stage: int
-    dr_label: str
-    confidence: Optional[float] = None
-    xai_image_url: Optional[str] = None
-    xai_method: Optional[str] = None
-    notes: Optional[str] = None
+from pydantic import BaseModel, ConfigDict, Field
 
-class DiagnosisCreate(DiagnosisBase):
-    patient_id: str
-    image_url: str
 
-class DiagnosisInDBBase(DiagnosisBase):
+class DiagnosisUpdate(BaseModel):
+    """Only the clinical notes are editable; model output is immutable."""
+
+    notes: Optional[str] = Field(default=None, max_length=5000)
+
+
+class DiagnosisResponse(BaseModel):
+    # protected_namespaces=() because the provenance fields start with "model_",
+    # which pydantic otherwise reserves.
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
     id: str
     patient_id: str
     doctor_id: str
-    image_url: str
+    dr_stage: int
+    dr_label: str
+    confidence: Optional[float] = None
+    notes: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    # Provenance. The UI keys its "simulated — not for clinical use" banner off
+    # is_simulated, so it is required rather than optional.
+    is_simulated: bool
+    model_name: Optional[str] = None
+    model_version: Optional[str] = None
 
-class DiagnosisResponse(DiagnosisInDBBase):
-    pass
+    xai_image_url: Optional[str] = None
+    xai_method: Optional[str] = None
+
+    # image_key is deliberately absent: the storage location is internal, and
+    # the image is fetched from /api/v1/images/{id}, which checks ownership.
+
+
+class DiagnosisListItem(BaseModel):
+    """Row shape for the reports list, with the patient name joined in."""
+
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
+    id: str
+    patient_id: str
+    patient_name: str
+    dr_stage: int
+    dr_label: str
+    confidence: Optional[float] = None
+    is_simulated: bool
+    created_at: datetime

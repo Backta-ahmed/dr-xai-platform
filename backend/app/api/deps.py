@@ -37,7 +37,11 @@ async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        # 403, not 400: the request is well-formed, the account is just barred.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account has been deactivated.",
+        )
     return current_user
 
 async def get_current_admin_user(
