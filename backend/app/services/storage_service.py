@@ -64,12 +64,13 @@ def _supabase_configured() -> bool:
     return bool(settings.SUPABASE_URL and settings.SUPABASE_KEY)
 
 
-def _read_capped(file: UploadFile) -> bytes:
+def _read_capped(file: UploadFile, limit: int | None = None) -> bytes:
     """Read the upload, refusing anything over the cap.
 
     Read in chunks so an oversized upload is rejected without first
     materialising all of it in memory.
     """
+    cap = limit or MAX_UPLOAD_BYTES
     buffer = io.BytesIO()
     total = 0
     while True:
@@ -77,10 +78,10 @@ def _read_capped(file: UploadFile) -> bytes:
         if not chunk:
             break
         total += len(chunk)
-        if total > MAX_UPLOAD_BYTES:
+        if total > cap:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"Image exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit.",
+                detail=f"File exceeds the {cap // (1024 * 1024)}MB limit.",
             )
         buffer.write(chunk)
     if total == 0:
@@ -89,6 +90,40 @@ def _read_capped(file: UploadFile) -> bytes:
             detail="Uploaded file is empty.",
         )
     return buffer.getvalue()
+
+
+def _put(object_name: str, payload: bytes, content_type: str) -> str:
+    """Write bytes to the configured backend and return the opaque storage key.
+
+    Shared by clinical images and credential documents so both take exactly the
+    same path: private bucket where configured, local disk otherwise, never a
+    public URL.
+    """
+    if _supabase_configured():
+        try:
+            _get_supabase().storage.from_(settings.SUPABASE_BUCKET).upload(
+                path=object_name,
+                file=payload,
+                file_options={"content-type": content_type},
+            )
+            return f"{_SUPABASE_SCHEME}{object_name}"
+        except Exception as exc:  # noqa: BLE001 - fall back rather than lose the upload
+            if settings.is_production:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Storage is unavailable.",
+                ) from exc
+            # One line, not a traceback: outside production this fallback is an
+            # expected path (no Supabase configured locally) and a full stack on
+            # every upload buries real errors.
+            logger.warning(
+                "Supabase upload unavailable (%s); storing locally.",
+                type(exc).__name__,
+            )
+
+    _LOCAL_DIR.mkdir(parents=True, exist_ok=True)
+    (_LOCAL_DIR / object_name).write_bytes(payload)
+    return f"{_LOCAL_SCHEME}{object_name}"
 
 
 def _decode_and_normalise(raw: bytes) -> bytes:
@@ -156,26 +191,54 @@ def save_image(file: UploadFile) -> tuple[str, bytes]:
     # Generated server-side. The client's filename is never consulted, which is
     # what closes the path-traversal hole in the previous implementation.
     object_name = f"{uuid.uuid4().hex}.png"
+    return _put(object_name, png, "image/png"), png
 
-    if _supabase_configured():
-        try:
-            _get_supabase().storage.from_(settings.SUPABASE_BUCKET).upload(
-                path=object_name,
-                file=png,
-                file_options={"content-type": "image/png"},
-            )
-            return f"{_SUPABASE_SCHEME}{object_name}", png
-        except Exception as exc:  # noqa: BLE001 - fall back rather than lose the scan
-            if settings.is_production:
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="Image storage is unavailable.",
-                ) from exc
-            logger.warning("Supabase upload failed, storing locally", exc_info=True)
 
-    _LOCAL_DIR.mkdir(parents=True, exist_ok=True)
-    (_LOCAL_DIR / object_name).write_bytes(png)
-    return f"{_LOCAL_SCHEME}{object_name}", png
+MAX_DOCUMENT_BYTES = 8 * 1024 * 1024
+MAX_DOCUMENTS_PER_REQUEST = 4
+_PDF_MAGIC = b"%PDF-"
+
+
+def save_credential_document(file: UploadFile) -> dict:
+    """Store one proof-of-qualification document.
+
+    Accepts an image or a PDF. These are identity papers — a medical licence
+    carries a full name, a registration number and often a photograph — so they
+    are handled at least as carefully as the retinal images:
+
+    * Images are decoded and re-encoded exactly as clinical images are, which
+      strips EXIF (a phone photo of a licence carries GPS by default).
+    * PDFs cannot be re-encoded safely without a rendering dependency, so they
+      are validated by magic bytes, size-capped, and stored verbatim. The
+      admin route serves them as an attachment rather than inline, so a PDF
+      carrying embedded JavaScript is never executed in a reviewer's browser.
+    * Nothing here returns a public URL.
+
+    Returns a descriptor for the AccessRequest.documents JSON column.
+    """
+    raw = _read_capped(file, MAX_DOCUMENT_BYTES)
+    original_name = (file.filename or "document")[:120]
+
+    if raw.startswith(_PDF_MAGIC):
+        payload, extension, content_type = raw, "pdf", "application/pdf"
+    else:
+        # Not a PDF, so it must be a genuine image or it is rejected.
+        payload, extension, content_type = _decode_and_normalise(raw), "png", "image/png"
+
+    object_name = f"{uuid.uuid4().hex}.{extension}"
+    key = _put(object_name, payload, content_type)
+
+    return {
+        "key": key,
+        "filename": original_name,
+        "content_type": content_type,
+        "size": len(payload),
+    }
+
+
+def load_document(storage_key: str) -> bytes:
+    """Bytes for a stored credential document. Caller must be an administrator."""
+    return load_image(storage_key)
 
 
 def load_image(storage_key: str) -> bytes:

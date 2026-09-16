@@ -3,7 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.routes import admin, auth, diagnosis, images, patients, reports, stats, users
+from app.api.routes import (
+    access_requests,
+    admin,
+    auth,
+    diagnosis,
+    images,
+    patients,
+    reports,
+    stats,
+    users,
+)
 from app.core.config import settings
 from app.core.limiter import limiter
 
@@ -42,6 +52,9 @@ def health() -> dict:
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(
+    access_requests.router, prefix="/access-requests", tags=["access-requests"]
+)
 api_router.include_router(patients.router, prefix="/patients", tags=["patients"])
 api_router.include_router(diagnosis.router, prefix="/diagnosis", tags=["diagnosis"])
 api_router.include_router(images.router, prefix="/images", tags=["images"])
