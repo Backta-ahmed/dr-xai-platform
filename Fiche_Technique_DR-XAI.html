@@ -1,0 +1,927 @@
+<title>Fiche Technique DR-XAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&display=swap">
+
+<style>
+  /* Palette derived from the platform's own theme tokens (frontend/src/index.css):
+     cyprus #004741, accent #00736B, sand #F0EDE4. Neutrals carry a green bias
+     so they read as chosen against that primary rather than inherited grey. */
+  :root {
+    --ground:      #FAF8F4;
+    --surface:     #FFFFFF;
+    --surface-alt: #F2EFE8;
+    --ink:         #15201E;
+    --ink-soft:    #4A5755;
+    --ink-faint:   #77817E;
+    --rule:        #DED8CC;
+    --rule-strong: #C3BCAC;
+    --primary:     #004741;
+    --accent:      #00736B;
+    --critical:    #A2302A;
+    --high:        #B15A18;
+    --medium:      #8F6D10;
+    --low:         #456F53;
+    --ok:          #1C6B43;
+    --crit-wash:   #F7E9E7;
+    --ok-wash:     #E6F1EA;
+    --warn-wash:   #FAF0DC;
+
+    --f-display: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --f-body:    "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono:    "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ground:      #0D1312;
+      --surface:     #151D1C;
+      --surface-alt: #1C2625;
+      --ink:         #E9E5DC;
+      --ink-soft:    #A6B0AD;
+      --ink-faint:   #79837F;
+      --rule:        #293331;
+      --rule-strong: #3B4643;
+      --primary:     #57ADA2;
+      --accent:      #6BC4B8;
+      --critical:    #E4837A;
+      --high:        #E09D5F;
+      --medium:      #D3BA62;
+      --low:         #86BE97;
+      --ok:          #63C692;
+      --crit-wash:   #2A1A19;
+      --ok-wash:     #14251C;
+      --warn-wash:   #262013;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1312;
+    --surface:     #151D1C;
+    --surface-alt: #1C2625;
+    --ink:         #E9E5DC;
+    --ink-soft:    #A6B0AD;
+    --ink-faint:   #79837F;
+    --rule:        #293331;
+    --rule-strong: #3B4643;
+    --primary:     #57ADA2;
+    --accent:      #6BC4B8;
+    --critical:    #E4837A;
+    --high:        #E09D5F;
+    --medium:      #D3BA62;
+    --low:         #86BE97;
+    --ok:          #63C692;
+    --crit-wash:   #2A1A19;
+    --ok-wash:     #14251C;
+    --warn-wash:   #262013;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 1060px;
+    margin-inline: auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead { display: flex; flex-direction: column; gap: 20px; }
+
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.12;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 66ch;
+    margin: 0;
+  }
+
+  /* ---------- identification block ---------- */
+  .ident {
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
+  .ident div {
+    padding: 14px 18px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ident dt {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  .ident dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ident .mono { font-family: var(--f-mono); font-size: 12.5px; word-break: break-all; }
+
+  /* ---------- sections ---------- */
+  section { display: flex; flex-direction: column; gap: 18px; }
+
+  h2 {
+    font-family: var(--f-display);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0;
+    padding-bottom: 9px;
+    border-bottom: 2px solid var(--primary);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  h2 .num {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: .06em;
+  }
+
+  h3 {
+    font-family: var(--f-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  p { margin: 0; max-width: 68ch; }
+  p + p { margin-top: 12px; }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: .875em;
+    background: var(--surface-alt);
+    padding: 1px 5px;
+    border-radius: 2px;
+    word-break: break-word;
+  }
+
+  /* ---------- severity summary ---------- */
+  .severity { display: flex; flex-direction: column; gap: 10px; }
+
+  .sev-row {
+    display: grid;
+    grid-template-columns: 78px 1fr 46px;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .sev-label {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .sev-track {
+    height: 22px;
+    background: var(--surface-alt);
+    display: flex;
+    overflow: hidden;
+  }
+
+  .sev-fill { height: 100%; }
+  .sev-fill.resolved { background: var(--ok); }
+  .sev-fill.operator { background: var(--medium); }
+  .sev-fill.deferred { background: var(--rule-strong); }
+
+  .sev-count {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    padding-top: 4px;
+  }
+
+  .legend span { display: flex; align-items: center; gap: 7px; }
+
+  .swatch { width: 11px; height: 11px; flex-shrink: 0; }
+  .swatch.resolved { background: var(--ok); }
+  .swatch.operator { background: var(--medium); }
+  .swatch.deferred { background: var(--rule-strong); }
+
+  /* ---------- tables ---------- */
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); }
+
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13.5px; }
+
+  thead th {
+    background: var(--surface-alt);
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  td.mono, th.mono { font-family: var(--f-mono); font-size: 12.5px; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .pill.pass { background: var(--ok-wash); color: var(--ok); }
+  .pill.open { background: var(--warn-wash); color: var(--medium); }
+  .pill.crit { background: var(--crit-wash); color: var(--critical); }
+
+  /* ---------- before / after ---------- */
+  .ba { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--rule); background: var(--surface); }
+
+  .ba-item { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--rule); }
+  .ba-item:last-child { border-bottom: none; }
+
+  .ba-item > div { padding: 14px 16px; }
+  .ba-before { border-right: 1px solid var(--rule); background: var(--surface-alt); }
+
+  .ba-tag {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .ba-before .ba-tag { color: var(--critical); }
+  .ba-after .ba-tag { color: var(--ok); }
+  .ba-item p { font-size: 13.5px; line-height: 1.5; max-width: none; }
+
+  /* ---------- callout ---------- */
+  .callout {
+    border-left: 3px solid var(--critical);
+    background: var(--crit-wash);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .callout.neutral { border-left-color: var(--accent); background: var(--surface-alt); }
+  .callout h3 { color: var(--ink); }
+  .callout p { font-size: 14px; }
+
+  /* ---------- contract block ---------- */
+  pre {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0;
+  }
+
+  ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; max-width: 68ch; }
+  li::marker { color: var(--accent); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  @media (max-width: 620px) {
+    .ba-item { grid-template-columns: 1fr; }
+    .ba-before { border-right: none; border-bottom: 1px solid var(--rule); }
+    .sev-row { grid-template-columns: 66px 1fr 38px; gap: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="eyebrow">Fiche technique · Remise en état applicative</div>
+    <h1>DR-XAI Platform — Security &amp; Functional Rebuild</h1>
+    <p class="standfirst">
+      Audit and targeted reconstruction of the doctor-facing web platform for diabetic
+      retinopathy screening. Covers credential exposure remediation, PHI access control,
+      restoration of broken clinical features, and the interface contract for the
+      grading model still to be delivered.
+    </p>
+
+    <dl class="ident">
+      <div>
+        <dt>Designation</dt>
+        <dd>DR-XAI Platform</dd>
+      </div>
+      <div>
+        <dt>Component</dt>
+        <dd>Web application (clinical)</dd>
+      </div>
+      <div>
+        <dt>Date</dt>
+        <dd>14 September 2026</dd>
+      </div>
+      <div>
+        <dt>Baseline</dt>
+        <dd class="mono">437ad4e</dd>
+      </div>
+      <div>
+        <dt>Head</dt>
+        <dd class="mono">f7b58d1</dd>
+      </div>
+      <div>
+        <dt>Commits</dt>
+        <dd>5</dd>
+      </div>
+      <div>
+        <dt>Files audited</dt>
+        <dd>62</dd>
+      </div>
+      <div>
+        <dt>Findings</dt>
+        <dd>66</dd>
+      </div>
+      <div>
+        <dt>Deployment target</dt>
+        <dd>Local demonstration</dd>
+      </div>
+      <div>
+        <dt>Clinical status</dt>
+        <dd style="color:var(--critical);font-weight:600">Not for clinical use</dd>
+      </div>
+    </dl>
+  </header>
+
+  <section>
+    <h2><span class="num">01</span> Context</h2>
+    <p>
+      The application was generated by an AI coding tool and had never been reviewed.
+      A full audit of all 62 source files returned 66 findings, 12 of them critical.
+      Two were structural rather than incidental, and together they determined the
+      shape of the work.
+    </p>
+
+    <div class="callout">
+      <h3>Finding 1 — Live credential exposure</h3>
+      <p>
+        <code>backend/.env</code> contained a working Supabase PostgreSQL password,
+        project URL and anonymous JWT key. The project had no <code>.gitignore</code> at
+        any level and was not yet a Git repository, so the first commit would have
+        published those credentials permanently. The directory is additionally
+        synchronised to OneDrive.
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>Finding 2 — Contract mismatch with the research</h3>
+      <p>
+        The interface is built around an ICDR severity grade (stages 0–4) with a
+        confidence score. Examination of the associated research repositories confirmed
+        that no grading model exists: all four architectures perform lesion segmentation
+        only, producing four-channel EX / HE / MA / SE masks.
+        <code>model_service.py</code> returned <code>random.randint(0, 4)</code>.
+        A doctor uploading a scan received a randomly chosen stage presented with a
+        confidence bar, a clinical description and a downloadable signed report.
+      </p>
+    </div>
+
+    <p>
+      The grading model is owned by a separate developer and was out of scope. The
+      platform was therefore rebuilt to be correct, secure and explicitly honest about
+      producing simulated output, with a documented interface for that model to be
+      connected later without further changes to the application.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Disposition of findings</h2>
+
+    <div class="severity">
+      <div class="sev-row">
+        <span class="sev-label" style="color:var(--critical)">Critical</span>
+        <div class="sev-track" role="img" aria-label="Critical: 8 resolved, 3 require operator action, 1 deferred">
+          <div class="sev-fill resolved" style="width:66.7%"></div>
+          <div class="sev-fill operator" style="width:25%"></div>
+          <div class="sev-fill deferred" style="width:8.3%"></div>
+        </div>
+        <span class="sev-count">12</span>
+      </div>
+      <div class="sev-row">
+        <span class="sev-label" style="color:var(--high)">High</span>
+        <div class="sev-track" role="img" aria-label="High: 11 resolved, 2 deferred">
+          <div class="sev-fill resolved" style="width:84.6%"></div>
+          <div class="sev-fill deferred" style="width:15.4%"></div>
+        </div>
+        <span class="sev-count">13</span>
+      </div>
+      <div class="sev-row">
+        <span class="sev-label" style="color:var(--medium)">Medium</span>
+        <div class="sev-track" role="img" aria-label="Medium: 25 resolved, 2 deferred">
+          <div class="sev-fill resolved" style="width:92.6%"></div>
+          <div class="sev-fill deferred" style="width:7.4%"></div>
+        </div>
+        <span class="sev-count">27</span>
+      </div>
+      <div class="sev-row">
+        <span class="sev-label" style="color:var(--low)">Low</span>
+        <div class="sev-track" role="img" aria-label="Low: 13 resolved, 1 deferred">
+          <div class="sev-fill resolved" style="width:92.9%"></div>
+          <div class="sev-fill deferred" style="width:7.1%"></div>
+        </div>
+        <span class="sev-count">14</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i class="swatch resolved"></i> Resolved in code</span>
+      <span><i class="swatch operator"></i> Requires operator action on Supabase</span>
+      <span><i class="swatch deferred"></i> Deferred with documented rationale</span>
+    </div>
+
+    <p>
+      Items marked <em>requires operator action</em> are complete in code but depend on
+      steps only the account holder can perform: credential rotation, deletion of the
+      seeded accounts, and creation of a private storage bucket. Deferred items are
+      listed with their rationale in section 06.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Principal corrections</h2>
+
+    <h3>Secrets and configuration</h3>
+    <div class="ba">
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p><code>SECRET_KEY</code> defaulted to the literal string <code>"changeme"</code> when the environment variable was absent. The failure was silent.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Required field with no default; known placeholder values and any key shorter than 32 characters are rejected at startup. The application refuses to boot rather than sign tokens with a guessable key.</p>
+        </div>
+      </div>
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>No <code>.gitignore</code> anywhere; no <code>.env.example</code>; no version control.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Repository initialised behind a <code>.gitignore</code> excluding secrets, databases and <code>backend/uploads/</code>. Exclusion of each was verified before the first commit. A documented <code>.env.example</code> ships in its place.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Protected health information</h3>
+    <div class="ba">
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>Retinal scans were stored with <code>get_public_url()</code> and additionally served by an unauthenticated <code>StaticFiles</code> mount at <code>/uploads</code>. Anyone holding a URL could retrieve patient imaging indefinitely.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Private bucket; opaque storage keys never exposed in API responses; the static mount removed. Images are served only by <code>GET /images/{diagnosis_id}</code>, which verifies ownership and returns 404 — not 403 — so the response does not confirm that an identifier exists.</p>
+        </div>
+      </div>
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>No server-side validation of uploads. The client's <code>Content-Type</code> was trusted and the stored filename extension was taken from the client. No size limit.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Uploads are validated by decoding them, restricted to five raster formats, capped at 10 MB by chunked read, and re-encoded to PNG — which is pixel-lossless but discards EXIF, where clinical devices record serial numbers and sometimes patient identifiers. Stored names are generated server-side.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Authentication</h3>
+    <div class="ba">
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>Failed login returned 400, so the frontend's 401 interceptor never fired. No rate limiting existed anywhere in the application. Seeded accounts used <code>admin123</code> and <code>doctor123</code>, printed to the console and pushed to the live database.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>401 with a uniform message for both unknown-email and wrong-password cases, and a dummy hash verification on the unknown-email path so response timing cannot be used to enumerate registered addresses. Login is rate limited to five attempts per minute. Seeding takes its password from the environment, enforces a twelve-character minimum and refuses to run in production.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Clinical features that did not work</h3>
+    <div class="ba">
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>The result page composed <code>"http://localhost:8000" + image_url</code>, where <code>image_url</code> was already absolute. The retinal scan was broken on every diagnosis ever produced — the doctor was shown a verdict with no image against which to check it.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Images load through the authenticated route as a blob, since an <code>&lt;img src&gt;</code> cannot carry a bearer token. Verified rendering end to end.</p>
+        </div>
+      </div>
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>The doctor dashboard derived its figures from a patient-list request. Three of its four indicators were pinned at zero and the distribution chart permanently reported no data.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>New <code>GET /stats/me</code> endpoint returning real per-doctor counts, severity distribution and a 30-day window.</p>
+        </div>
+      </div>
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>The reports page issued one request per patient inside a sequential loop — 101 round trips for 100 patients — with an empty catch block discarding every failure.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>A single paginated <code>GET /diagnosis/</code> with the patient name joined server-side.</p>
+        </div>
+      </div>
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p><code>SystemLog</code> was defined and read by the administration page but never written. There was no record of who had accessed which patient record.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Audit service recording authentication, patient record access, diagnosis runs and administrative changes — a regulatory requirement for a system handling medical data, not a convenience.</p>
+        </div>
+      </div>
+      <div class="ba-item">
+        <div class="ba-before">
+          <div class="ba-tag">Before</div>
+          <p>Administrative password reset accepted a new password, discarded it, and returned 200. An administrator unlocking a doctor saw success and nothing happened.</p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-tag">After</div>
+          <p>Applied and recorded. Request schemas were narrowed to exactly the fields each endpoint acts on, so silent discard is no longer representable.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Traceability of results</h3>
+    <p>
+      Every diagnosis row now records <code>is_simulated</code>, <code>model_name</code> and
+      <code>model_version</code>. The column is not nullable and defaults to <em>true</em> at
+      database level, so an omission fails toward warning rather than toward silence. This is
+      the single most consequential schema change: when a real model is connected, results
+      produced during the simulated period remain permanently distinguishable instead of
+      blending into genuine predictions.
+    </p>
+    <p>
+      Simulated results carry a warning banner in the interface, a badge on each row, and both
+      a diagonal watermark and a header notice on the exported PDF — the artefact most likely
+      to be printed, filed or forwarded and read without surrounding context.
+    </p>
+
+    <h3>Interface quality</h3>
+    <ul>
+      <li>Eleven failure paths that logged only to the browser console now surface a message and a retry. Previously a failed request left an indefinite spinner or an empty table.</li>
+      <li>Severity badges moved to dark text on light amber and orange. The previous white-on-yellow measured approximately 2.0:1 against the WCAG AA requirement of 4.5:1, and severity is clinical information.</li>
+      <li>The fixed 240 px sidebar became a drawer below the <code>lg</code> breakpoint; the content offset had been 256 px, leaving a misaligned gutter on every page.</li>
+      <li>Request cancellation added to all data loading: rapid pagination could previously allow an earlier response to resolve last and overwrite current rows.</li>
+      <li>Dialogs gained focus trapping, Escape and click-outside dismissal. Deactivating a doctor now requires confirmation.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Verification</h2>
+    <p>
+      Each item below was executed against a running instance. Behaviour was confirmed by
+      observation, not by inspection of the source.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Expected</th>
+            <th>Observed</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>HTML payload renamed <code>.jpg</code>, declared <code>image/jpeg</code></td>
+            <td class="mono">422</td>
+            <td class="mono">422</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>SVG containing script</td>
+            <td class="mono">422</td>
+            <td class="mono">422</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>EXIF device serial in uploaded JPEG</td>
+            <td>Absent from stored object</td>
+            <td>Absent</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Image request by a non-owning clinician</td>
+            <td class="mono">404</td>
+            <td class="mono">404</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Image request without bearer token</td>
+            <td class="mono">401</td>
+            <td class="mono">401</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Authentication with incorrect password</td>
+            <td class="mono">401</td>
+            <td class="mono">401</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Repeated authentication attempts</td>
+            <td>Throttled</td>
+            <td>Throttled after 5/min</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Retinal image on diagnosis result page</td>
+            <td>Renders</td>
+            <td>Renders</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Exported PDF report</td>
+            <td>Watermarked, confidence as percentage</td>
+            <td>Watermarked, 86%</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Doctor dashboard indicators</td>
+            <td>Reflect stored data</td>
+            <td>Correct counts</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Audit log after authentication events</td>
+            <td>Populated with actor and address</td>
+            <td>Populated</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Layout at 375 px viewport</td>
+            <td>Drawer navigation, no page overflow</td>
+            <td>Confirmed</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Schema migration, upgrade and downgrade</td>
+            <td>Both directions clean</td>
+            <td>Both clean</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Browser console during session</td>
+            <td>No errors</td>
+            <td>None</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+          <tr>
+            <td>Static analysis and production build</td>
+            <td>Clean</td>
+            <td>Clean</td>
+            <td><span class="pill pass">Pass</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Two defects were found only by execution and would not have surfaced from reading the
+      code: the seeding script bypassed the validation applied by the API and could create an
+      account that authenticated successfully but whose every response failed serialisation;
+      and the dashboard prefixed a title onto a name that already contained one. Both were
+      corrected.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Model integration contract</h2>
+    <p>
+      The grading model is being developed separately. The boundary is therefore specified as
+      a contract rather than left as internal scaffolding. Connecting a model requires
+      implementing one class; no other part of the application changes.
+    </p>
+
+<pre>class GradingBackend:
+    name    = "swin-grading"     # identifies the model
+    version = "1.0.0"            # increment when weights change
+
+    def __init__(self) -&gt; None:
+        ...                      # load the checkpoint once, not per request
+
+    def predict(self, image_png: bytes) -&gt; DiagnosisResult:
+        ...</pre>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Aspect</th><th>Specification</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Input</td>
+            <td>Validated RGB PNG bytes, EXIF removed. Not resized, normalised or colour-corrected — all preprocessing belongs to the implementer.</td>
+          </tr>
+          <tr>
+            <td>Output</td>
+            <td><code>dr_stage</code> 0–4 (ICDR), <code>dr_label</code> matching the stage, <code>confidence</code> in [0, 1] or <code>None</code>, <code>is_simulated=False</code>, plus provenance strings. Ranges are enforced at construction.</td>
+          </tr>
+          <tr>
+            <td>Concurrency</td>
+            <td>Invoked from a thread pool, never on the event loop. May block. Must be safe for concurrent calls or guard itself.</td>
+          </tr>
+          <tr>
+            <td>Failure</td>
+            <td>Raise. The route converts the exception into a 503 without leaking a traceback.</td>
+          </tr>
+          <tr>
+            <td>Activation</td>
+            <td>Register in <code>_BACKENDS</code> and set <code>MODEL_BACKEND</code> in the environment.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Calls already run in a thread pool under the stub, where blocking is harmless. The
+      arrangement exists so that connecting a real model — where a single inference would
+      otherwise stall every concurrent request — requires no change to the route.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Known limitations</h2>
+    <p>
+      Stated explicitly so they are not mistaken for oversights. Each was a deliberate
+      decision with a rationale.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Limitation</th><th>Rationale</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>No diagnostic model connected</td>
+            <td>Owned by a separate developer and not yet available. The platform runs a stub and declares it at every surface.</td>
+            <td><span class="pill open">By decision</span></td>
+          </tr>
+          <tr>
+            <td>Session token held in <code>localStorage</code></td>
+            <td>Readable by any script on the page. Migration to <code>httpOnly</code> cookies requires reworking the authentication flow and was not attempted. Exposure is bounded by the reduced 60-minute token lifetime and by upload sanitisation, which closes the principal injection route.</td>
+            <td><span class="pill crit">Outstanding</span></td>
+          </tr>
+          <tr>
+            <td>No automated test suite</td>
+            <td><code>pytest</code> is declared as a dependency but no tests are written. Verification for this cycle was manual and is recorded in section 04.</td>
+            <td><span class="pill crit">Outstanding</span></td>
+          </tr>
+          <tr>
+            <td>Explainability module removed</td>
+            <td>It returned a path to a file that neither existed nor was served, rendering a broken image beneath an authoritative heading. It returns with the segmentation work.</td>
+            <td><span class="pill open">Deferred</span></td>
+          </tr>
+          <tr>
+            <td>Dataset licensing unresolved</td>
+            <td>The research repository records no licence, ethics approval or redistribution terms for FGADR. If demonstration data originates there, the question is open.</td>
+            <td><span class="pill open">Unresolved</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> Outstanding operator actions</h2>
+    <p>
+      These require access to the Supabase account and cannot be performed from the codebase.
+      Until items 1 and 2 are complete, the exposed credentials remain valid.
+    </p>
+    <ul>
+      <li><strong>Rotate</strong> the database password, anonymous key and service-role key, then record the new values together with a freshly generated <code>SECRET_KEY</code>.</li>
+      <li><strong>Remove</strong> the two seeded accounts carrying the known weak passwords.</li>
+      <li><strong>Create</strong> a private storage bucket named <code>retina-images</code>, with public access disabled.</li>
+      <li><strong>Back up, then migrate</strong> the production schema. The migration renames a column and existing rows reference objects in the former public bucket, which will not resolve from a private one.</li>
+      <li><strong>Populate</strong> the new configuration keys documented in <code>.env.example</code>.</li>
+    </ul>
+
+    <div class="callout neutral">
+      <h3>Operating posture</h3>
+      <p>
+        The platform is suitable for demonstration and for development against the model
+        contract. It must not be used to inform patient care while
+        <code>MODEL_BACKEND</code> remains <code>stub</code>, and the two outstanding items in
+        section 06 should be closed before it handles any real patient record.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <div>DR-XAI Platform · Fiche technique · 14 September 2026</div>
+    <div>Baseline 437ad4e → f7b58d1 · 62 files audited · 66 findings · verification per section 04</div>
+  </footer>
+
+</div>

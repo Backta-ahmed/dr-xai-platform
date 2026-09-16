@@ -82,15 +82,19 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
                 to={link.path}
                 onClick={onClose}
                 aria-current={active ? "page" : undefined}
-                className={`group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`group flex items-center rounded-control py-2.5 pr-3 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-cyprus-light text-white"
-                    : "text-gray-200 hover:bg-cyprus-light/50 hover:text-white"
+                    ? "border-l-[3px] border-accent bg-cyprus-light pl-[9px] text-white"
+                    : "border-l-[3px] border-transparent pl-[9px] text-gray-200 hover:bg-cyprus-light/50 hover:text-white"
                 }`}
               >
+                {/* White, not text-accent: #00736B on bg-cyprus-light measures
+                    ~1.4:1, so the active-nav indicator was effectively invisible.
+                    The active state is carried by the lighter background and the
+                    left rule below instead. */}
                 <Icon
                   className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                    active ? "text-accent" : "text-gray-300"
+                    active ? "text-white" : "text-gray-300"
                   }`}
                   aria-hidden="true"
                 />

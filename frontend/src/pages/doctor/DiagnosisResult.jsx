@@ -4,30 +4,30 @@ import { Eye, FileDown, User } from "lucide-react";
 import toast from "react-hot-toast";
 
 import PageWrapper from "../../components/layout/PageWrapper";
-import AuthenticatedImage from "../../components/shared/AuthenticatedImage";
 import ErrorState from "../../components/shared/ErrorState";
+import FundusViewer from "../../components/shared/FundusViewer";
 import SimulationBanner from "../../components/shared/SimulationBanner";
+import Button from "../../components/ui/Button";
+import Card, { CardHeading, FieldLabel } from "../../components/ui/Card";
+import { LoadingPanel } from "../../components/ui/Spinner";
 import api, { errorMessage } from "../../api/axios";
 import { useFetch } from "../../hooks/useFetch";
-import { formatDate } from "../../utils/helpers";
+import { formatDateTime } from "../../utils/helpers";
 
-const DR_DESCRIPTIONS = [
-  "No signs of diabetic retinopathy were detected. The retina appears healthy with no visible microaneurysms, hemorrhages, or exudates.",
-  "Mild non-proliferative diabetic retinopathy. A few microaneurysms are present, indicating early retinal damage.",
-  "Moderate non-proliferative diabetic retinopathy. Multiple microaneurysms, dot-blot hemorrhages, and possible hard exudates are observed.",
-  "Severe non-proliferative diabetic retinopathy. Extensive hemorrhages and microaneurysms in all quadrants. High risk of progression to proliferative DR.",
-  "Proliferative diabetic retinopathy. Neovascularization detected. Immediate specialist referral recommended to prevent vision loss.",
+// Wash surface with dark ink, never a solid fill under white text: solid
+// --color-success and --color-warning measure ~2.9:1 against white, so the
+// previous treatment left the page's most prominent element legible only for
+// stages 3 and 4.
+const STAGE_SURFACE = [
+  "bg-success-wash text-success-ink border-success/30",
+  "bg-warning-wash text-warning-ink border-warning/40",
+  "bg-warning-wash text-warning-ink border-warning/40",
+  "bg-danger-wash text-danger-ink border-danger/40",
+  "bg-danger-wash text-danger-ink border-danger/50",
 ];
 
-// Indexed by dr_stage. Falls back to neutral rather than producing the literal
-// class string "undefined" when a stage arrives outside 0-4.
-const STAGE_BANNER = [
-  "bg-success",
-  "bg-warning",
-  "bg-warning",
-  "bg-danger",
-  "bg-danger",
-];
+// Solid fill for the meter, which carries no text over it.
+const STAGE_FILL = ["bg-success", "bg-warning", "bg-warning", "bg-danger", "bg-danger"];
 
 const DiagnosisResult = () => {
   const { id } = useParams();
@@ -58,7 +58,6 @@ const DiagnosisResult = () => {
       link.click();
       link.remove();
     } catch (err) {
-      // Previously console.error only: the button appeared to do nothing.
       toast.error(errorMessage(err, "Could not generate the report."));
     } finally {
       if (url) URL.revokeObjectURL(url);
@@ -68,137 +67,151 @@ const DiagnosisResult = () => {
 
   if (loading) {
     return (
-      <PageWrapper title="Diagnosis Result">
-        <div className="flex justify-center py-20">
-          <div
-            role="status"
-            aria-label="Loading"
-            className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
-          />
-        </div>
+      <PageWrapper title="Diagnosis">
+        <LoadingPanel label="Loading diagnosis" className="py-20" />
       </PageWrapper>
     );
   }
 
   if (error || !diagnosis) {
     return (
-      <PageWrapper title="Diagnosis Result">
-        <div className="rounded-xl bg-white shadow-card">
-          <ErrorState message={error || "This diagnosis could not be found."} onRetry={load} />
-        </div>
+      <PageWrapper title="Diagnosis">
+        <Card padding="none">
+          <ErrorState
+            message={error || "This diagnosis could not be found."}
+            onRetry={load}
+          />
+        </Card>
       </PageWrapper>
     );
   }
 
-  const bannerColor = STAGE_BANNER[diagnosis.dr_stage] ?? "bg-gray-500";
-  const description = DR_DESCRIPTIONS[diagnosis.dr_stage] ?? "No description available for this stage.";
+  const stageSurface =
+    STAGE_SURFACE[diagnosis.dr_stage] ?? "bg-gray-100 text-gray-900 border-gray-300";
+  const stageFill = STAGE_FILL[diagnosis.dr_stage] ?? "bg-gray-400";
   const confidence =
     diagnosis.confidence != null ? Math.round(diagnosis.confidence * 100) : null;
 
   return (
-    <PageWrapper title="Diagnosis Result">
-      {diagnosis.is_simulated && <SimulationBanner className="mb-6" />}
+    <PageWrapper title="Diagnosis">
+      {diagnosis.is_simulated && <SimulationBanner className="mb-5" />}
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="space-y-6">
-          <div className="rounded-xl bg-white p-6 shadow-card">
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-600">
-              Retinal Image
-            </h3>
-            <div className="overflow-hidden rounded-lg bg-black">
-              <AuthenticatedImage
-                path={`/images/${diagnosis.id}`}
-                alt="Retinal fundus scan for this diagnosis"
-                className="h-64 w-full object-contain"
-              />
-            </div>
-          </div>
+      {/* Image-primary. The clinician reads the retina first and consults the
+          model second; the previous layout inverted that. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <Card padding="sm">
+            <FundusViewer
+              imagePath={`/images/${diagnosis.id}`}
+              alt="Retinal fundus image for this diagnosis"
+            />
+          </Card>
         </div>
 
-        <div className="space-y-6">
-          <div className={`${bannerColor} rounded-xl p-8 text-center text-white`}>
-            <p className="mb-2 text-sm font-medium uppercase tracking-wide opacity-90">
-              {diagnosis.is_simulated ? "Simulated Stage" : "Detected Stage"}
+        <aside className="flex flex-col gap-4 lg:col-span-4">
+          <div className={`${stageSurface} rounded-card border px-5 py-4`}>
+            <FieldLabel className="opacity-80">
+              {diagnosis.is_simulated ? "Simulated grade" : "Model grade"}
+            </FieldLabel>
+            <p className="mt-1 text-xl font-bold">
+              Stage {diagnosis.dr_stage}
             </p>
-            <h2 className="text-3xl font-bold">{diagnosis.dr_label}</h2>
+            <p className="text-sm font-medium opacity-90">{diagnosis.dr_label}</p>
           </div>
 
-          <div className="rounded-xl bg-white p-6 shadow-card">
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-600">
-              Model Confidence
-            </h3>
+          <Card padding="sm">
+            <FieldLabel>Confidence</FieldLabel>
             {confidence === null ? (
-              <p className="text-sm text-gray-600">Not reported by this model.</p>
+              <p className="mt-2 text-sm text-gray-600">Not reported by this model.</p>
             ) : (
-              <div className="flex items-center gap-4">
-                <div className="h-4 flex-1 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className={`h-full rounded-full transition-all duration-1000 ${bannerColor}`}
-                    style={{ width: `${confidence}%` }}
-                    role="progressbar"
-                    aria-valuenow={confidence}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Model confidence"
-                  />
+              <>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className={`h-full rounded-full ${stageFill}`}
+                      style={{ width: `${confidence}%` }}
+                      role="progressbar"
+                      aria-valuenow={confidence}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Model confidence"
+                    />
+                  </div>
+                  <span className="tabular text-md font-semibold text-gray-900">
+                    {confidence}%
+                  </span>
                 </div>
-                <span className="text-lg font-bold text-gray-900">{confidence}%</span>
+                {/* A specialist cannot calibrate against a bare scalar. Until the
+                    real model reports an operating characteristic, say plainly
+                    what this number is and is not. */}
+                <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                  Reported for the assigned stage. No sensitivity or specificity is
+                  published for this backend.
+                </p>
+              </>
+            )}
+          </Card>
+
+          <Card padding="sm">
+            <FieldLabel>Provenance</FieldLabel>
+            <dl className="mt-2 space-y-1.5 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-600">Model</dt>
+                <dd className="text-right font-medium text-gray-900">
+                  {diagnosis.model_name || "unknown"}
+                </dd>
               </div>
-            )}
-          </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-600">Version</dt>
+                <dd className="text-right font-medium text-gray-900">
+                  {diagnosis.model_version || "unknown"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-600">Analysed</dt>
+                <dd className="tabular text-right font-medium text-gray-900">
+                  {formatDateTime(diagnosis.created_at)}
+                </dd>
+              </div>
+            </dl>
+          </Card>
 
-          <div className="space-y-2 rounded-xl bg-white p-6 text-sm shadow-card">
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-600">
-              Details
-            </h3>
-            <div>
-              Date: <span className="font-medium">{formatDate(diagnosis.created_at)}</span>
-            </div>
-            <div>
-              Model:{" "}
-              <span className="font-medium">
-                {diagnosis.model_name || "unknown"}
-                {diagnosis.model_version ? ` (${diagnosis.model_version})` : ""}
-              </span>
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-white p-6 shadow-card">
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-600">
-              Clinical Description
-            </h3>
-            <p className="text-sm leading-relaxed text-gray-700">{description}</p>
-            {diagnosis.is_simulated && (
-              <p className="mt-3 text-xs italic text-gray-600">
-                This is the standard description for the stage shown above. Because
-                the stage is simulated, it does not describe the uploaded image.
+          {diagnosis.notes && (
+            <Card padding="sm">
+              <CardHeading as="h3">Clinical notes</CardHeading>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                {diagnosis.notes}
               </p>
-            )}
-          </div>
+            </Card>
+          )}
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
+          {/* One primary action. Previously three flex-1 buttons gave download,
+              navigation and a new diagnosis identical weight. */}
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
               onClick={handleDownloadPdf}
               disabled={downloading}
-              className="flex flex-1 items-center justify-center rounded-lg bg-cyprus px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-cyprus-light disabled:opacity-50"
             >
-              <FileDown size={18} className="mr-2" aria-hidden="true" />
-              {downloading ? "Preparing…" : "Download PDF"}
-            </button>
-            <button
-              onClick={() => navigate(`/patients/${diagnosis.patient_id}`)}
-              className="flex flex-1 items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              <User size={18} className="mr-2" aria-hidden="true" /> View Patient
-            </button>
-            <button
-              onClick={() => navigate("/diagnosis/new")}
-              className="flex flex-1 items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-accent/90"
-            >
-              <Eye size={18} className="mr-2" aria-hidden="true" /> New Diagnosis
-            </button>
+              <FileDown size={17} aria-hidden="true" />
+              {downloading ? "Preparing…" : "Download report"}
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => navigate(`/patients/${diagnosis.patient_id}`)}
+              >
+                <User size={16} aria-hidden="true" /> Patient
+              </Button>
+              <Button variant="secondary" fullWidth onClick={() => navigate("/diagnosis/new")}>
+                <Eye size={16} aria-hidden="true" /> New scan
+              </Button>
+            </div>
           </div>
-        </div>
+        </aside>
       </div>
     </PageWrapper>
   );

@@ -1,41 +1,31 @@
-import React, { useState, useLayoutEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { ROUTES } from "../../constants";
 import { errorMessage } from "../../api/axios";
 import toast from "react-hot-toast";
 import { Eye } from "lucide-react";
-import gsap from "gsap";
 
+// The GSAP entrance animation that used to live here has been removed.
+//
+// It animated `from: { opacity: 0 }`, which parks the element invisible and
+// relies on the tween completing to reveal it. Under React StrictMode's
+// double-invoked effects the context revert could leave the card stuck at zero
+// opacity — the sign-in form was observed rendering fully invisible while
+// present in the DOM. On the one screen every user must pass through every
+// shift, a decorative animation that can lock them out is a bad trade.
+//
+// Anything added here later must animate *from a visible resting state*.
 const Login = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const containerRef = useRef(null);
   const cardRef = useRef(null);
   const logoRef = useRef(null);
-
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(logoRef.current, {
-        y: -50,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out"
-      });
-      gsap.from(cardRef.current, {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        delay: 0.2,
-        ease: "power3.out"
-      });
-    }, containerRef);
-    return () => ctx.revert();
-  }, []);
 
   if (user) {
     return <Navigate to={user.role === "admin" ? ROUTES.ADMIN : ROUTES.DASHBOARD} replace />;

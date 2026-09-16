@@ -6,6 +6,8 @@
 @theme {
   --font-sans: "Inter", sans-serif;
 
+  /* ── Brand ────────────────────────────────────────────────────────────
+     Frozen by decision. Hue and shade are not open for revision. */
   --color-cyprus: #004741;
   --color-cyprus-dark: #003330;
   --color-cyprus-light: #005a53;
@@ -17,15 +19,64 @@
   --color-warning: #E67E22;
   --color-success: #27AE60;
 
-  --shadow-card: 0 2px 12px rgba(0,71,65,0.08);
+  /* Wash tints of the semantic colours, for surfaces that must carry meaning
+     while keeping dark text on top. The solid semantic colours above are safe
+     as *fills behind white text* only for danger (5.4:1) — success and warning
+     measure ~2.9:1, so a severity surface uses the wash plus dark text. */
+  --color-danger-wash: #FBEAE7;
+  --color-warning-wash: #FDF1E3;
+  --color-success-wash: #E7F4EC;
+  --color-danger-ink: #8C2318;
+  --color-warning-ink: #8A4B0B;
+  --color-success-ink: #146135;
+
+  /* ── Type scale ───────────────────────────────────────────────────────
+     Was absent entirely: 149 of 174 size declarations were text-sm or text-xs,
+     with nothing between 14px and 18px, so card headings had no step to reach
+     for. Body stays at 14px — this is a clinical tool and shrinking it to buy
+     density is the wrong trade. The scale adds the missing middle instead. */
+  --text-2xs: 0.6875rem;   /* 11px — badges, table micro-labels */
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;      /* 12px — metadata, captions */
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.875rem;     /* 14px — table body, dense UI, form values */
+  --text-sm--line-height: 1.375rem;
+  --text-base: 0.9375rem;  /* 15px — running text */
+  --text-base--line-height: 1.5rem;
+  --text-md: 1rem;         /* 16px — card headings (the missing step) */
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.125rem;     /* 18px — section headings */
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.375rem;     /* 22px — page titles */
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.75rem;     /* 28px — the one figure that matters on a screen */
+  --text-2xl--line-height: 2.125rem;
+
+  /* ── Elevation ────────────────────────────────────────────────────────
+     Three tiers, spent by role rather than stamped on every block. */
+  --shadow-card: 0 1px 2px rgba(0,71,65,0.06), 0 2px 12px rgba(0,71,65,0.07);
+  --shadow-raised: 0 2px 4px rgba(0,71,65,0.08), 0 8px 24px rgba(0,71,65,0.10);
   --shadow-modal: 0 8px 40px rgba(0,0,0,0.18);
 
+  /* ── Radii ────────────────────────────────────────────────────────────
+     Five were in use. Inputs sat at rounded-md while the submit button beside
+     them sat at rounded-lg, so every form in the app had mismatched corners.
+     Controls share one radius; containers share another. */
+  --radius-control: 0.5rem;   /* inputs, buttons, selects — must match */
+  --radius-card: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
 }
 
 body {
   @apply bg-sand text-gray-900 font-sans antialiased;
+}
+
+/* Tabular figures wherever digits are compared down a column: confidence
+   percentages, counts, dates. Proportional digits make columns ragged. */
+table,
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Respect the OS "reduce motion" setting. The app uses spinners, a GSAP intro
