@@ -7,6 +7,7 @@ import {
   LogOut,
   Settings,
   Users,
+  UserCheck,
   UserCircle,
   X,
 } from "lucide-react";
@@ -24,7 +25,8 @@ const DOCTOR_LINKS = [
 const ADMIN_LINKS = [
   { name: "Admin Dashboard", path: ROUTES.ADMIN, icon: LayoutDashboard, exact: true },
   { name: "Manage Doctors", path: `${ROUTES.ADMIN}/doctors`, icon: Users },
-  { name: "System Logs", path: `${ROUTES.ADMIN}/logs`, icon: FileText },
+  { name: "Access Requests", path: `${ROUTES.ADMIN}/requests`, icon: UserCheck },
+  { name: "Audit Log", path: `${ROUTES.ADMIN}/logs`, icon: FileText },
   { name: "AI Model", path: `${ROUTES.ADMIN}/ai-model`, icon: Settings },
 ];
 

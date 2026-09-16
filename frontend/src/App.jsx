@@ -7,6 +7,8 @@ import ProtectedRoute from "./components/shared/ProtectedRoute";
 
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
+import Home from "./pages/public/Home";
+import RequestAccess from "./pages/public/RequestAccess";
 
 import Dashboard from "./pages/doctor/Dashboard";
 import Diagnosis from "./pages/doctor/Diagnosis";
@@ -18,6 +20,7 @@ import Profile from "./pages/doctor/Profile";
 import Reports from "./pages/doctor/Reports";
 
 import AIModel from "./pages/admin/AIModel";
+import AccessRequests from "./pages/admin/AccessRequests";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageDoctors from "./pages/admin/ManageDoctors";
 import SystemLogs from "./pages/admin/SystemLogs";
@@ -44,6 +47,10 @@ function App() {
           }}
         />
         <Routes>
+          {/* Public. "/" used to redirect straight to /login, which gave the
+              platform no front door and nowhere to explain who it is for. */}
+          <Route path="/" element={<Home />} />
+          <Route path="/request-access" element={<RequestAccess />} />
           <Route path="/login" element={<Login />} />
 
           <Route path="/dashboard" element={doctorRoute(<Dashboard />)} />
@@ -65,10 +72,10 @@ function App() {
 
           <Route path="/admin" element={adminRoute(<AdminDashboard />)} />
           <Route path="/admin/doctors" element={adminRoute(<ManageDoctors />)} />
+          <Route path="/admin/requests" element={adminRoute(<AccessRequests />)} />
           <Route path="/admin/logs" element={adminRoute(<SystemLogs />)} />
           <Route path="/admin/ai-model" element={adminRoute(<AIModel />)} />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
           {/* A real 404, rather than redirecting to /login and making a typo
               look like an expired session. */}
           <Route path="*" element={<NotFound />} />

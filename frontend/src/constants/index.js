@@ -31,6 +31,8 @@ export const DR_STAGE_CHART_COLORS = [
 export const DR_STAGE_NAMES = DR_STAGES.map((s) => s.label);
 
 export const ROUTES = {
+  HOME: "/",
+  REQUEST_ACCESS: "/request-access",
   LOGIN: "/login",
   DASHBOARD: "/dashboard",
   PATIENTS: "/patients",
