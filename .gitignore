@@ -31,6 +31,12 @@ htmlcov/
 *.sqlite
 *.sqlite3
 
+# Database dumps carry patient rows and password hashes.
+supabase-backup-*.json
+*-backup-*.json
+*.dump
+*.sql.gz
+
 # ── Patient data / uploads ──────────────────────────────
 # Retinal scans are PHI. They belong in object storage, never in git.
 backend/uploads/
