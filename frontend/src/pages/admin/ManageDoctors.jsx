@@ -5,12 +5,15 @@ import toast from "react-hot-toast";
 import PageWrapper from "../../components/layout/PageWrapper";
 import ErrorState from "../../components/shared/ErrorState";
 import Modal from "../../components/shared/Modal";
+import Badge from "../../components/ui/Badge";
+import Button from "../../components/ui/Button";
+import Card from "../../components/ui/Card";
+import Field from "../../components/ui/Field";
+import { LoadingPanel } from "../../components/ui/Spinner";
+import { TBody, TableShell, Td, Th, Tr } from "../../components/ui/DataTable";
 import api, { errorMessage } from "../../api/axios";
 import { useFetch } from "../../hooks/useFetch";
 import { formatDate } from "../../utils/helpers";
-
-const INPUT_CLASS =
-  "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent focus:outline-none focus:ring-accent";
 
 const EMPTY_FORM = { full_name: "", email: "", password: "" };
 
@@ -86,154 +89,127 @@ const ManageDoctors = () => {
 
   return (
     <PageWrapper title="Manage Doctors">
-      <div className="mb-6 flex justify-end">
-        <button
-          onClick={() => setAddOpen(true)}
-          className="flex items-center rounded-lg bg-cyprus px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyprus-light"
-        >
-          <PlusCircle size={18} className="mr-2" aria-hidden="true" /> Add doctor
-        </button>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <p className="max-w-prose text-sm text-gray-700">
+          Clinician accounts on this platform. Deactivating revokes sign-in without
+          deleting any patient or diagnosis record.
+        </p>
+        <Button variant="primary" onClick={() => setAddOpen(true)} className="flex-shrink-0">
+          <PlusCircle size={16} aria-hidden="true" />
+          Add doctor
+        </Button>
       </div>
 
-      <div className="rounded-xl bg-white shadow-card">
+      <Card padding="none">
         {loading ? (
-          <div className="flex justify-center py-16">
-            <div
-              role="status"
-              aria-label="Loading"
-              className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
-            />
-          </div>
+          <LoadingPanel label="Loading doctors" />
         ) : error ? (
           <ErrorState message={error} onRetry={load} />
         ) : doctors.length === 0 ? (
-          <p className="py-16 text-center text-sm text-gray-600">
+          <p className="py-14 text-center text-sm text-gray-600">
             No doctor accounts yet.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-sand">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {doctors.map((doc, idx) => (
-                  <tr key={doc.id} className={idx % 2 === 0 ? "bg-white" : "bg-sand-light"}>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                      {doc.full_name}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {doc.email}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          doc.is_active
-                            ? "bg-green-100 text-green-900"
-                            : "bg-red-100 text-red-900"
-                        }`}
-                      >
-                        {doc.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {formatDate(doc.created_at)}
-                    </td>
-                    <td className="space-x-4 whitespace-nowrap px-6 py-4 text-sm">
-                      <button
-                        onClick={() => setPendingToggle(doc)}
-                        className="font-medium text-accent transition-colors hover:text-cyprus"
-                      >
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Name</Th>
+                <Th>Email</Th>
+                <Th>Status</Th>
+                <Th>Created</Th>
+                <Th>Actions</Th>
+              </tr>
+            </thead>
+            <TBody>
+              {doctors.map((doc, idx) => (
+                <Tr key={doc.id} index={idx}>
+                  <Td nowrap className="font-medium text-gray-900">
+                    {doc.full_name}
+                  </Td>
+                  <Td nowrap>{doc.email}</Td>
+                  <Td nowrap>
+                    <Badge tone={doc.is_active ? "success" : "neutral"} size="sm">
+                      {doc.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </Td>
+                  <Td nowrap className="tabular text-xs">
+                    {formatDate(doc.created_at)}
+                  </Td>
+                  <Td nowrap>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setPendingToggle(doc)}>
                         {doc.is_active ? "Deactivate" : "Activate"}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           setResetTarget(doc);
                           setNewPassword("");
                         }}
-                        className="inline-flex items-center font-medium text-accent transition-colors hover:text-cyprus"
                       >
-                        <KeyRound size={14} className="mr-1" aria-hidden="true" /> Reset password
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        <KeyRound size={13} aria-hidden="true" />
+                        Reset password
+                      </Button>
+                    </div>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </TableShell>
         )}
-      </div>
+      </Card>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add a new doctor">
         <form onSubmit={handleAddDoctor} className="space-y-4">
-          <div>
-            <label htmlFor="doc-name" className="block text-sm font-medium text-gray-700">
-              Full name
-            </label>
-            <input
-              id="doc-name"
-              type="text"
-              required
-              maxLength={100}
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              className={INPUT_CLASS}
-            />
-          </div>
-          <div>
-            <label htmlFor="doc-email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="doc-email"
-              type="email"
-              required
-              maxLength={150}
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className={INPUT_CLASS}
-            />
-          </div>
-          <div>
-            <label htmlFor="doc-password" className="block text-sm font-medium text-gray-700">
-              Temporary password
-            </label>
-            <input
-              id="doc-password"
-              type="password"
-              required
-              minLength={8}
-              maxLength={72}
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className={INPUT_CLASS}
-            />
-            <p className="mt-1 text-xs text-gray-600">
-              At least 8 characters. Share it with them directly and ask them to change
-              it from their profile page after signing in.
-            </p>
-          </div>
-          <div className="flex justify-end space-x-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setAddOpen(false)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-            >
+          <Field label="Full name" required>
+            {(p) => (
+              <input
+                {...p}
+                type="text"
+                maxLength={100}
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <Field label="Email" required>
+            {(p) => (
+              <input
+                {...p}
+                type="email"
+                maxLength={150}
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <Field
+            label="Temporary password"
+            required
+            hint="At least 8 characters. Share it with them directly and ask them to change it from their profile page after signing in."
+          >
+            {(p) => (
+              <input
+                {...p}
+                type="password"
+                minLength={8}
+                maxLength={72}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="secondary" onClick={() => setAddOpen(false)}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-cyprus px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-cyprus-light disabled:opacity-50"
-            >
+            </Button>
+            <Button variant="primary" type="submit" disabled={submitting}>
               {submitting ? "Adding…" : "Add doctor"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -257,25 +233,16 @@ const ManageDoctors = () => {
             </>
           )}
         </p>
-        <div className="flex justify-end space-x-3 pt-6">
-          <button
-            type="button"
-            onClick={() => setPendingToggle(null)}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-          >
+        <div className="flex justify-end gap-2 pt-6">
+          <Button variant="secondary" onClick={() => setPendingToggle(null)}>
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={pendingToggle?.is_active ? "danger" : "primary"}
             onClick={confirmToggle}
-            className={`rounded-lg px-6 py-2 text-sm font-medium text-white transition-colors ${
-              pendingToggle?.is_active
-                ? "bg-danger hover:bg-danger/90"
-                : "bg-cyprus hover:bg-cyprus-light"
-            }`}
           >
             {pendingToggle?.is_active ? "Deactivate" : "Reactivate"}
-          </button>
+          </Button>
         </div>
       </Modal>
 
@@ -285,40 +252,30 @@ const ManageDoctors = () => {
         title={`Reset password for ${resetTarget?.full_name ?? ""}`}
       >
         <form onSubmit={handleResetPassword} className="space-y-4">
-          <div>
-            <label htmlFor="reset-pw" className="block text-sm font-medium text-gray-700">
-              New password
-            </label>
-            <input
-              id="reset-pw"
-              type="password"
-              required
-              minLength={8}
-              maxLength={72}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className={INPUT_CLASS}
-            />
-            <p className="mt-1 text-xs text-gray-600">
-              At least 8 characters. Their existing sessions stay valid until their
-              token expires.
-            </p>
-          </div>
-          <div className="flex justify-end space-x-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setResetTarget(null)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-            >
+          <Field
+            label="New password"
+            required
+            hint="At least 8 characters. Their existing sessions stay valid until their token expires."
+          >
+            {(p) => (
+              <input
+                {...p}
+                type="password"
+                minLength={8}
+                maxLength={72}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            )}
+          </Field>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="secondary" onClick={() => setResetTarget(null)}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-cyprus px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-cyprus-light disabled:opacity-50"
-            >
+            </Button>
+            <Button variant="primary" type="submit" disabled={submitting}>
               {submitting ? "Resetting…" : "Reset password"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

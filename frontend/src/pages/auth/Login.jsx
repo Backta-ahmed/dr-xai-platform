@@ -1,10 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
+import { Eye } from "lucide-react";
+import toast from "react-hot-toast";
+
+import Button from "../../components/ui/Button";
+import Field from "../../components/ui/Field";
 import { useAuth } from "../../hooks/useAuth";
 import { ROUTES } from "../../constants";
 import { errorMessage } from "../../api/axios";
-import toast from "react-hot-toast";
-import { Eye } from "lucide-react";
 
 // The GSAP entrance animation that used to live here has been removed.
 //
@@ -16,16 +19,14 @@ import { Eye } from "lucide-react";
 // shift, a decorative animation that can lock them out is a bad trade.
 //
 // Anything added here later must animate *from a visible resting state*.
+// The refs the tween targeted are gone too, so there is nothing here inviting
+// it back.
 const Login = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const containerRef = useRef(null);
-  const cardRef = useRef(null);
-  const logoRef = useRef(null);
 
   if (user) {
     return <Navigate to={user.role === "admin" ? ROUTES.ADMIN : ROUTES.DASHBOARD} replace />;
@@ -50,57 +51,51 @@ const Login = () => {
   };
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-sand flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div ref={logoRef} className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="flex min-h-screen flex-col justify-center bg-sand py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center text-cyprus">
-          <Eye size={48} strokeWidth={1.5} />
+          <Eye size={44} strokeWidth={1.5} aria-hidden="true" />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+        {/* Was text-3xl font-extrabold — the only extrabold in the codebase, and
+            a step the type scale does not define. text-2xl is the scale's top. */}
+        <h1 className="mt-5 text-center text-2xl font-semibold tracking-tight text-gray-900">
           DR Diagnosis System
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        </h1>
+        <p className="mt-1.5 text-center text-sm text-gray-600">
           Sign in to your clinical account
         </p>
       </div>
 
-      <div ref={cardRef} className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-card sm:rounded-xl sm:px-10 border border-gray-100">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email address</label>
-              <div className="mt-1">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="border border-gray-100 bg-white px-4 py-8 shadow-card sm:rounded-card sm:px-10">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <Field label="Email address" required>
+              {(p) => (
                 <input
+                  {...p}
                   type="email"
-                  required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
                 />
-              </div>
-            </div>
+              )}
+            </Field>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <div className="mt-1">
+            <Field label="Password" required>
+              {(p) => (
                 <input
+                  {...p}
                   type="password"
-                  required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
                 />
-              </div>
-            </div>
+              )}
+            </Field>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cyprus hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 transition-colors"
-              >
-                {isSubmitting ? "Signing in..." : "Sign in"}
-              </button>
-            </div>
+            <Button variant="primary" size="lg" type="submit" fullWidth disabled={isSubmitting}>
+              {isSubmitting ? "Signing in…" : "Sign in"}
+            </Button>
           </form>
         </div>
       </div>

@@ -22,17 +22,17 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-sand px-6 text-center">
-      <Compass size={48} className="mb-4 text-cyprus" aria-hidden="true" />
-      <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
-        Page not found
-      </h1>
+      <Compass size={44} className="mb-4 text-cyprus" aria-hidden="true" />
+      <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Page not found</h1>
       <p className="mt-2 max-w-md text-sm text-gray-700">
         That address does not match anything in this application. It may have been
         mistyped, or the page may have moved.
       </p>
+      {/* A router Link, so it cannot be a <Button>; it carries Button's exact
+          lg geometry and rounded-control so the two never drift apart. */}
       <Link
         to={home}
-        className="mt-6 rounded-lg bg-cyprus px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyprus-light"
+        className="mt-6 inline-flex items-center justify-center gap-2 rounded-control bg-cyprus px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyprus-light"
       >
         {user ? "Back to your dashboard" : "Go to sign in"}
       </Link>

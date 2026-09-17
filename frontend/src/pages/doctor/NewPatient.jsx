@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import PageWrapper from "../../components/layout/PageWrapper";
-import ErrorState from "../../components/shared/ErrorState";
-import api, { errorMessage } from "../../api/axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+
+import PageWrapper from "../../components/layout/PageWrapper";
+import ErrorState from "../../components/shared/ErrorState";
+import Button from "../../components/ui/Button";
+import Card from "../../components/ui/Card";
+import Field from "../../components/ui/Field";
+import { LoadingPanel } from "../../components/ui/Spinner";
+import api, { errorMessage } from "../../api/axios";
 
 const NewPatient = () => {
   const navigate = useNavigate();
@@ -79,7 +84,7 @@ const NewPatient = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    
+
     setSubmitting(true);
     const payload = { ...form };
     const years = parseInt(payload.diabetes_duration_years, 10);
@@ -108,19 +113,12 @@ const NewPatient = () => {
     }
   };
 
-  const inputClass = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent text-sm";
-  const errorInputClass = "border-danger focus:ring-danger focus:border-danger";
-
   if (loadingPatient) {
     return (
       <PageWrapper title="Edit Patient">
-        <div className="flex justify-center py-20">
-          <div
-            role="status"
-            aria-label="Loading"
-            className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
-          />
-        </div>
+        <Card padding="none" className="mx-auto max-w-2xl">
+          <LoadingPanel label="Loading patient" />
+        </Card>
       </PageWrapper>
     );
   }
@@ -130,86 +128,123 @@ const NewPatient = () => {
   if (loadError) {
     return (
       <PageWrapper title="Edit Patient">
-        <div className="mx-auto max-w-2xl rounded-xl bg-white shadow-card">
+        <Card padding="none" className="mx-auto max-w-2xl">
           <ErrorState message={loadError} onRetry={() => window.location.reload()} />
-        </div>
+        </Card>
       </PageWrapper>
     );
   }
 
   return (
     <PageWrapper title={isEdit ? "Edit Patient" : "Add New Patient"}>
-      <div className="max-w-2xl mx-auto">
-        <form onSubmit={handleSubmit} noValidate className="bg-white rounded-xl shadow-card p-8 space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name *</label>
-            <input 
-              type="text" 
-              name="full_name" 
-              value={form.full_name} 
-              onChange={handleChange} 
-              className={`${inputClass} ${errors.full_name ? errorInputClass : ''}`} 
-            />
-            {errors.full_name && <p className="mt-1 text-xs text-danger">{errors.full_name}</p>}
+      <Card padding="md" className="mx-auto max-w-2xl">
+        {/* Field owns the label/control/error wiring that this form previously
+            hand-rolled with a copy-pasted class string per input. */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          <Field label="Full name" required error={errors.full_name}>
+            {(p) => (
+              <input
+                {...p}
+                type="text"
+                name="full_name"
+                value={form.full_name}
+                onChange={handleChange}
+              />
+            )}
+          </Field>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Date of birth">
+              {(p) => (
+                <input
+                  {...p}
+                  type="date"
+                  name="date_of_birth"
+                  value={form.date_of_birth}
+                  onChange={handleChange}
+                />
+              )}
+            </Field>
+
+            <Field label="Gender">
+              {(p) => (
+                <select {...p} name="gender" value={form.gender} onChange={handleChange}>
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              )}
+            </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-              <input type="date" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Gender</label>
-              <select name="gender" value={form.gender} onChange={handleChange} className={inputClass}>
-                <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Diabetes type" required error={errors.diabetes_type}>
+              {(p) => (
+                <select
+                  {...p}
+                  name="diabetes_type"
+                  value={form.diabetes_type}
+                  onChange={handleChange}
+                >
+                  <option value="">Select</option>
+                  <option value="type1">Type 1</option>
+                  <option value="type2">Type 2</option>
+                  <option value="gestational">Gestational</option>
+                  <option value="other">Other</option>
+                </select>
+              )}
+            </Field>
+
+            <Field label="Duration (years)">
+              {(p) => (
+                <input
+                  {...p}
+                  type="number"
+                  name="diabetes_duration_years"
+                  value={form.diabetes_duration_years}
+                  onChange={handleChange}
+                />
+              )}
+            </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Diabetes Type *</label>
-              <select 
-                name="diabetes_type" 
-                value={form.diabetes_type} 
-                onChange={handleChange} 
-                className={`${inputClass} ${errors.diabetes_type ? errorInputClass : ''}`}
-              >
-                <option value="">Select</option>
-                <option value="type1">Type 1</option>
-                <option value="type2">Type 2</option>
-                <option value="gestational">Gestational</option>
-                <option value="other">Other</option>
-              </select>
-              {errors.diabetes_type && <p className="mt-1 text-xs text-danger">{errors.diabetes_type}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Duration (years)</label>
-              <input type="number" name="diabetes_duration_years" value={form.diabetes_duration_years} onChange={handleChange} className={inputClass} />
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Phone">
+              {(p) => (
+                <input
+                  {...p}
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                />
+              )}
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <input type="tel" name="phone" value={form.phone} onChange={handleChange} className={inputClass} />
-          </div>
+          <Field label="Notes">
+            {(p) => (
+              <textarea
+                {...p}
+                name="notes"
+                rows={3}
+                value={form.notes}
+                onChange={handleChange}
+              />
+            )}
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
-            <textarea name="notes" rows={3} value={form.notes} onChange={handleChange} className={inputClass}></textarea>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={() => navigate("/patients")} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-6 py-2 bg-cyprus text-white rounded-lg hover:bg-cyprus-light disabled:opacity-50 transition-colors text-sm font-medium">
-              {submitting ? "Saving..." : isEdit ? "Update Patient" : "Create Patient"}
-            </button>
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
+            <Button variant="secondary" onClick={() => navigate("/patients")}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
+              {submitting ? "Saving…" : isEdit ? "Update patient" : "Create patient"}
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </PageWrapper>
   );
 };

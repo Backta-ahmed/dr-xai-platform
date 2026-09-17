@@ -3,6 +3,9 @@ import { AlertTriangle, CheckCircle, Cpu } from "lucide-react";
 
 import PageWrapper from "../../components/layout/PageWrapper";
 import ErrorState from "../../components/shared/ErrorState";
+import Badge from "../../components/ui/Badge";
+import Card, { FieldLabel } from "../../components/ui/Card";
+import { LoadingPanel } from "../../components/ui/Spinner";
 import api from "../../api/axios";
 import { useFetch } from "../../hooks/useFetch";
 
@@ -25,13 +28,7 @@ const AIModel = () => {
   if (loading) {
     return (
       <PageWrapper title="AI Model">
-        <div className="flex justify-center py-20">
-          <div
-            role="status"
-            aria-label="Loading"
-            className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
-          />
-        </div>
+        <LoadingPanel label="Reading model status" />
       </PageWrapper>
     );
   }
@@ -39,9 +36,9 @@ const AIModel = () => {
   if (error || !info) {
     return (
       <PageWrapper title="AI Model">
-        <div className="rounded-xl bg-white shadow-card">
+        <Card padding="none">
           <ErrorState message={error ?? "No model status available."} onRetry={load} />
-        </div>
+        </Card>
       </PageWrapper>
     );
   }
@@ -50,18 +47,26 @@ const AIModel = () => {
 
   return (
     <PageWrapper title="AI Model">
-      <div className="mx-auto max-w-3xl space-y-8">
+      <div className="mx-auto max-w-3xl space-y-6">
+        {/* The loudest thing on the page, deliberately. No diagnostic model is
+            connected, and an administrator must not be able to skim past that.
+            danger-wash under danger-ink reads at roughly 8:1; the previous raw
+            red utilities were outside the design system's palette. */}
         {simulated && (
           <div
             role="alert"
-            className="flex items-start gap-3 rounded-xl border-2 border-red-300 bg-red-50 p-4"
+            className="flex items-start gap-3 rounded-card border-2 border-danger/50 bg-danger-wash p-4"
           >
-            <AlertTriangle size={22} className="mt-0.5 flex-shrink-0 text-red-700" aria-hidden="true" />
+            <AlertTriangle
+              size={22}
+              className="mt-0.5 flex-shrink-0 text-danger"
+              aria-hidden="true"
+            />
             <div>
-              <p className="text-sm font-semibold text-red-900">
+              <p className="text-md font-semibold text-danger-ink">
                 No diagnostic model is connected
               </p>
-              <p className="mt-1 text-sm leading-relaxed text-red-800">
+              <p className="mt-1 text-sm leading-relaxed text-danger-ink">
                 The platform is running the stub backend. Every diagnosis it produces
                 is a randomly generated placeholder, recorded in the database as
                 simulated and watermarked on every exported report. This must not be
@@ -71,47 +76,43 @@ const AIModel = () => {
           </div>
         )}
 
-        <div className="rounded-xl bg-white p-8 shadow-card">
+        <Card>
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="rounded-lg bg-sand p-3 text-cyprus">
-                <Cpu size={28} aria-hidden="true" />
+            <div className="flex items-center gap-3">
+              <div className="rounded-control bg-sand p-2.5 text-cyprus">
+                <Cpu size={24} aria-hidden="true" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  DR grading backend
-                </h2>
-                <p className="text-sm text-gray-600">
+                <h2 className="text-md font-semibold text-gray-900">DR grading backend</h2>
+                <p className="text-xs text-gray-600">
                   Selected by MODEL_BACKEND in backend/.env
                 </p>
               </div>
             </div>
-            <span
-              className={`inline-flex flex-shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                simulated ? "bg-amber-100 text-amber-900" : "bg-green-100 text-green-900"
-              }`}
-            >
+            <Badge tone={simulated ? "danger" : "success"} size="md" className="flex-shrink-0">
               {simulated ? "Simulated" : "Live"}
-            </span>
+            </Badge>
           </div>
 
-          <dl className="mt-6 grid grid-cols-2 gap-4 text-sm md:grid-cols-3">
+          <dl className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
             {[
               ["Backend key", info.key],
               ["Model name", info.name],
               ["Version", info.version],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-lg bg-sand-light p-3">
-                <dt className="text-xs uppercase tracking-wide text-gray-600">{label}</dt>
-                <dd className="mt-1 font-mono font-medium text-gray-900">{value}</dd>
+              <div key={label} className="rounded-control bg-sand-light p-3">
+                <dt>
+                  <FieldLabel>{label}</FieldLabel>
+                </dt>
+                <dd className="mt-1 font-mono text-sm font-medium text-gray-900">{value}</dd>
               </div>
             ))}
           </dl>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-cyprus/20 bg-cyprus/5 p-6">
+        <div className="rounded-card border border-cyprus/20 bg-cyprus/5 p-5">
           <div className="flex items-start gap-3">
-            <CheckCircle size={20} className="mt-0.5 flex-shrink-0 text-cyprus" aria-hidden="true" />
+            <CheckCircle size={18} className="mt-0.5 flex-shrink-0 text-cyprus" aria-hidden="true" />
             <div>
               <h3 className="text-sm font-semibold text-cyprus">Connecting a real model</h3>
               <p className="mt-1 text-sm leading-relaxed text-gray-700">

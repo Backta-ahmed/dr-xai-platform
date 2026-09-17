@@ -1,8 +1,12 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
+
 import PageWrapper from "../../components/layout/PageWrapper";
+import Button from "../../components/ui/Button";
+import Card, { CardHeading } from "../../components/ui/Card";
+import Field from "../../components/ui/Field";
 import { useAuth } from "../../hooks/useAuth";
 import api, { errorMessage } from "../../api/axios";
-import toast from "react-hot-toast";
 
 const Profile = () => {
   const { user, refreshUser } = useAuth();
@@ -51,54 +55,96 @@ const Profile = () => {
     }
   };
 
-  const inputClass = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent text-sm";
-
   return (
     <PageWrapper title="Profile">
-      <div className="max-w-2xl mx-auto space-y-8">
-        {/* Profile Form */}
-        <form onSubmit={handleSaveProfile} className="bg-white rounded-xl shadow-card p-8 space-y-5">
-          <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input type="email" value={user?.email || ""} disabled className={`${inputClass} bg-gray-100 cursor-not-allowed`} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Role</label>
-            <input type="text" value={user?.role || ""} disabled className={`${inputClass} bg-gray-100 cursor-not-allowed capitalize`} />
-          </div>
-          <div className="flex justify-end">
-            <button type="submit" disabled={saving} className="px-6 py-2 bg-cyprus text-white rounded-lg hover:bg-cyprus-light disabled:opacity-50 transition-colors text-sm font-medium">
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </form>
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Card>
+          <CardHeading as="h2">Personal information</CardHeading>
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <Field label="Full name">
+              {(p) => (
+                <input
+                  {...p}
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              )}
+            </Field>
 
-        {/* Change Password */}
-        <form onSubmit={handleChangePassword} className="bg-white rounded-xl shadow-card p-8 space-y-5">
-          <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Current Password</label>
-            <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">New Password</label>
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className={inputClass} />
-          </div>
-          <div className="flex justify-end">
-            <button type="submit" disabled={changingPw} className="px-6 py-2 bg-cyprus text-white rounded-lg hover:bg-cyprus-light disabled:opacity-50 transition-colors text-sm font-medium">
-              {changingPw ? "Updating..." : "Change Password"}
-            </button>
-          </div>
-        </form>
+            <Field label="Email" hint="Email and role are set by an administrator.">
+              {(p) => <input {...p} type="email" value={user?.email || ""} disabled />}
+            </Field>
+
+            <Field label="Role">
+              {(p) => (
+                <input
+                  {...p}
+                  type="text"
+                  className={`${p.className} capitalize`}
+                  value={user?.role || ""}
+                  disabled
+                />
+              )}
+            </Field>
+
+            <div className="flex justify-end pt-1">
+              <Button variant="primary" type="submit" disabled={saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
+          </form>
+        </Card>
+
+        <Card>
+          <CardHeading as="h2">Change password</CardHeading>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <Field label="Current password" required>
+              {(p) => (
+                <input
+                  {...p}
+                  type="password"
+                  autoComplete="current-password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                />
+              )}
+            </Field>
+
+            <Field label="New password" required hint="At least 8 characters.">
+              {(p) => (
+                <input
+                  {...p}
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              )}
+            </Field>
+
+            <Field label="Confirm new password" required>
+              {(p) => (
+                <input
+                  {...p}
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              )}
+            </Field>
+
+            {/* accent, not a second primary: one primary per view, and that one
+                belongs to the form this page is named after. */}
+            <div className="flex justify-end pt-1">
+              <Button variant="accent" type="submit" disabled={changingPw}>
+                {changingPw ? "Updating…" : "Change password"}
+              </Button>
+            </div>
+          </form>
+        </Card>
       </div>
     </PageWrapper>
   );

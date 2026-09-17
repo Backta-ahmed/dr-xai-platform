@@ -1,12 +1,15 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader } from "lucide-react";
 import toast from "react-hot-toast";
 
 import PageWrapper from "../../components/layout/PageWrapper";
 import ErrorState from "../../components/shared/ErrorState";
 import ImageUploader from "../../components/shared/ImageUploader";
 import SimulationBanner from "../../components/shared/SimulationBanner";
+import Button from "../../components/ui/Button";
+import Card, { CardHeading } from "../../components/ui/Card";
+import Field from "../../components/ui/Field";
+import { Spinner } from "../../components/ui/Spinner";
 import api, { errorMessage } from "../../api/axios";
 import { EYES } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
@@ -79,120 +82,137 @@ const Diagnosis = () => {
   if (isAnalyzing) {
     return (
       <PageWrapper title="Run Diagnosis">
-        <div className="flex flex-col items-center justify-center py-24">
-          <Loader className="mb-4 animate-spin text-cyprus" size={48} aria-hidden="true" />
-          <p className="text-lg font-medium text-gray-800" role="status">
-            Analysing retinal image…
-          </p>
-          <p className="mt-1 text-sm text-gray-600">This may take a moment.</p>
-        </div>
+        <Card padding="md" className="mx-auto max-w-md">
+          <div className="flex flex-col items-center py-10 text-center">
+            <Spinner size="lg" label="Analysing retinal image" />
+            <p className="mt-4 text-md font-medium text-gray-900">
+              Analysing retinal image…
+            </p>
+            <p className="mt-1 text-sm text-gray-600">This may take a moment.</p>
+          </div>
+        </Card>
       </PageWrapper>
     );
   }
 
   return (
     <PageWrapper title="Run Diagnosis">
-      {modelInfo?.is_simulated !== false && <SimulationBanner className="mb-6" />}
+      {modelInfo?.is_simulated !== false && <SimulationBanner className="mb-5" />}
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <div className="space-y-6">
-            <div className="rounded-xl bg-white p-6 shadow-card">
-              <label
-                htmlFor="patient-select"
-                className="mb-4 block text-lg font-semibold text-gray-900"
-              >
-                Patient
-              </label>
-              {loadError ? (
-                <ErrorState message={loadError} onRetry={loadPatients} className="py-6" />
-              ) : (
-                <select
-                  id="patient-select"
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  required
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent focus:outline-none focus:ring-accent"
-                >
-                  <option value="">Select a patient…</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.full_name}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {!loadError && patients.length === 0 && (
-                <p className="mt-3 text-sm text-gray-600">
-                  You have no patients yet.{" "}
-                  <button
-                    type="button"
-                    onClick={() => navigate("/patients/new")}
-                    className="font-medium text-accent underline"
-                  >
-                    Add one first
-                  </button>
-                  .
-                </p>
-              )}
-            </div>
+        {/* Image-weighted: the fundus is the thing being read, the two inputs
+            beside it are a few seconds of data entry. */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+          <div className="flex flex-col gap-4 lg:col-span-5">
+            <Card padding="sm">
+              <div className="space-y-4">
+                {loadError ? (
+                  <div>
+                    <CardHeading as="h2" className="mb-2">
+                      Patient
+                    </CardHeading>
+                    <ErrorState
+                      message={loadError}
+                      onRetry={loadPatients}
+                      className="py-6"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <Field label="Patient" required>
+                      {(p) => (
+                        <select
+                          {...p}
+                          value={patientId}
+                          onChange={(e) => setPatientId(e.target.value)}
+                        >
+                          <option value="">Select a patient…</option>
+                          {patients.map((patient) => (
+                            <option key={patient.id} value={patient.id}>
+                              {patient.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </Field>
 
-            <div className="rounded-xl bg-white p-6 shadow-card">
-              <fieldset>
-                <legend className="mb-1 text-lg font-semibold text-gray-900">
-                  Eye examined
-                </legend>
-                <p className="mb-3 text-sm text-gray-600">
-                  A fundus image is of one eye. Recording which one is what
-                  allows this scan to be compared against earlier scans of the
-                  same eye.
-                </p>
-                <div className="flex gap-3">
-                  {EYES.map((option) => {
-                    const active = eye === option.value;
-                    return (
-                      <label
-                        key={option.value}
-                        className={`flex flex-1 cursor-pointer flex-col items-center rounded-control border-2 px-4 py-3 transition-colors ${
-                          active
-                            ? "border-cyprus bg-cyprus text-white"
-                            : "border-gray-300 bg-white text-gray-800 hover:border-accent"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="eye"
-                          value={option.value}
-                          checked={active}
-                          onChange={(e) => setEye(e.target.value)}
-                          className="sr-only"
-                        />
-                        <span className="text-md font-bold tracking-wide">
-                          {option.abbr}
-                        </span>
-                        <span className={`text-xs ${active ? "text-white/80" : "text-gray-600"}`}>
-                          {option.label}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            </div>
+                    {patients.length === 0 && (
+                      <p className="text-sm text-gray-600">
+                        You have no patients yet.{" "}
+                        <button
+                          type="button"
+                          onClick={() => navigate("/patients/new")}
+                          className="font-medium text-accent underline"
+                        >
+                          Add one first
+                        </button>
+                        .
+                      </p>
+                    )}
+                  </>
+                )}
 
-            <button
+                {/* Laterality is stored with the scan, so a follow-up can be
+                    compared against the same eye. Required — the submit stays
+                    disabled until it is set. */}
+                <fieldset>
+                  <legend className="block text-sm font-medium text-gray-700">
+                    Eye examined
+                    <span className="ml-0.5 text-danger" aria-hidden="true">
+                      *
+                    </span>
+                  </legend>
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {EYES.map((option) => {
+                      const active = eye === option.value;
+                      return (
+                        <label
+                          key={option.value}
+                          className={`flex cursor-pointer items-baseline justify-center gap-2 rounded-control border px-3 py-2 transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent ${
+                            active
+                              ? "border-cyprus bg-cyprus text-white"
+                              : "border-gray-300 bg-white text-gray-800 hover:border-accent"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="eye"
+                            value={option.value}
+                            checked={active}
+                            onChange={(e) => setEye(e.target.value)}
+                            className="sr-only"
+                          />
+                          <span className="text-md font-bold tracking-wide">
+                            {option.abbr}
+                          </span>
+                          <span
+                            className={`text-xs ${active ? "text-white/80" : "text-gray-600"}`}
+                          >
+                            {option.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              </div>
+            </Card>
+
+            <Button
               type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
               disabled={!patientId || !eye || !imageFile}
-              className="w-full rounded-lg bg-cyprus py-3 text-sm font-medium text-white transition-colors hover:bg-cyprus-light disabled:cursor-not-allowed disabled:opacity-50"
             >
               Run diagnosis
-            </button>
+            </Button>
           </div>
 
-          <div className="rounded-xl bg-white p-6 shadow-card">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Retinal fundus image</h2>
+          <Card padding="sm" className="lg:col-span-7">
+            <CardHeading as="h2">Retinal fundus image</CardHeading>
             <ImageUploader onFileSelect={setImageFile} />
-          </div>
+          </Card>
         </div>
       </form>
     </PageWrapper>

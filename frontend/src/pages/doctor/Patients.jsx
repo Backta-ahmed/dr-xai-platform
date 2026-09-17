@@ -4,6 +4,11 @@ import { ChevronLeft, ChevronRight, PlusCircle, Search } from "lucide-react";
 
 import PageWrapper from "../../components/layout/PageWrapper";
 import ErrorState from "../../components/shared/ErrorState";
+import Button from "../../components/ui/Button";
+import Card from "../../components/ui/Card";
+import { PAGE_SIZE, TBody, TableShell, Td, Th, Tr } from "../../components/ui/DataTable";
+import { controlClass } from "../../components/ui/Field";
+import { LoadingPanel } from "../../components/ui/Spinner";
 import api from "../../api/axios";
 import { useFetch } from "../../hooks/useFetch";
 import { formatDate } from "../../utils/helpers";
@@ -22,7 +27,7 @@ const Patients = () => {
       // params, not string interpolation: a name containing & or # used to
       // corrupt the query string.
       api
-        .get("/patients/", { params: { page, limit: 10, search: query || undefined } })
+        .get("/patients/", { params: { page, limit: PAGE_SIZE, search: query || undefined } })
         .then((r) => r.data),
     [page, query]
   );
@@ -35,6 +40,7 @@ const Patients = () => {
 
   const patients = data?.items ?? [];
   const totalPages = data?.pages ?? 1;
+  const total = data?.total;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -44,13 +50,13 @@ const Patients = () => {
 
   return (
     <PageWrapper title="Patients">
-      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <form
-          onSubmit={handleSearch}
-          className="flex w-full items-center rounded-lg bg-white px-3 py-2 shadow-card sm:w-auto"
-          role="search"
-        >
-          <Search size={18} className="mr-2 text-gray-500" aria-hidden="true" />
+      <div className="mb-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <form onSubmit={handleSearch} role="search" className="relative w-full sm:w-72">
+          <Search
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+            aria-hidden="true"
+          />
           <input
             type="search"
             placeholder="Search patients…"
@@ -58,31 +64,23 @@ const Patients = () => {
             onChange={(e) => setSearch(e.target.value)}
             maxLength={100}
             aria-label="Search patients by name"
-            className="w-full border-none bg-transparent text-sm outline-none sm:w-64"
+            className={`${controlClass} pl-9`}
           />
         </form>
-        <button
-          onClick={() => navigate("/patients/new")}
-          className="flex items-center rounded-lg bg-cyprus px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyprus-light"
-        >
-          <PlusCircle size={18} className="mr-2" aria-hidden="true" /> Add patient
-        </button>
+        <Button variant="primary" onClick={() => navigate("/patients/new")}>
+          <PlusCircle size={16} aria-hidden="true" />
+          Add patient
+        </Button>
       </div>
 
-      <div className="rounded-xl bg-white shadow-card">
+      <Card padding="none">
         {loading ? (
-          <div className="flex justify-center py-16">
-            <div
-              role="status"
-              aria-label="Loading"
-              className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-cyprus"
-            />
-          </div>
+          <LoadingPanel label="Loading patients" />
         ) : error ? (
           <ErrorState message={error} onRetry={load} />
         ) : patients.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-lg text-gray-700">
+          <div className="px-6 py-14 text-center">
+            <p className="text-base font-medium text-gray-900">
               {query ? `No patients match “${query}”.` : "No patients yet"}
             </p>
             <p className="mt-1 text-sm text-gray-600">
@@ -90,69 +88,79 @@ const Patients = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-sand">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Date of birth</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Diabetes type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {patients.map((patient, idx) => (
-                  <tr key={patient.id} className={idx % 2 === 0 ? "bg-white" : "bg-sand-light"}>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                      {patient.full_name}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {formatDate(patient.date_of_birth)}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-600">
-                      {patient.diabetes_type || "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {patient.phone || "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm">
-                      <button
-                        onClick={() => navigate(`/patients/${patient.id}`)}
-                        className="font-medium text-accent transition-colors hover:text-cyprus"
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Name</Th>
+                <Th>Date of birth</Th>
+                <Th>Diabetes type</Th>
+                <Th>Phone</Th>
+                <Th>Actions</Th>
+              </tr>
+            </thead>
+            <TBody>
+              {patients.map((patient, i) => (
+                <Tr key={patient.id} index={i}>
+                  <Td nowrap className="font-medium text-gray-900">
+                    {patient.full_name}
+                  </Td>
+                  <Td nowrap className="tabular">
+                    {formatDate(patient.date_of_birth)}
+                  </Td>
+                  <Td nowrap className="capitalize">
+                    {patient.diabetes_type || "—"}
+                  </Td>
+                  <Td nowrap className="tabular">
+                    {patient.phone || "—"}
+                  </Td>
+                  <Td nowrap>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/patients/${patient.id}`)}
+                    >
+                      View
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </TableShell>
         )}
-      </div>
+      </Card>
 
-      {!loading && !error && totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center space-x-4">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded-lg bg-white p-2 shadow-card transition-colors hover:bg-sand disabled:opacity-30"
-            aria-label="Previous page"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="rounded-lg bg-white p-2 shadow-card transition-colors hover:bg-sand disabled:opacity-30"
-            aria-label="Next page"
-          >
-            <ChevronRight size={18} />
-          </button>
+      {!loading && !error && patients.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="tabular text-xs text-gray-600">
+            {total != null
+              ? `${total} patient${total === 1 ? "" : "s"} · showing ${patients.length}`
+              : `${patients.length} shown`}
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={15} aria-hidden="true" />
+              </Button>
+              <span className="tabular text-xs text-gray-700">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                aria-label="Next page"
+              >
+                <ChevronRight size={15} aria-hidden="true" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </PageWrapper>
