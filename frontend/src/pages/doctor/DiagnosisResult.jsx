@@ -11,6 +11,7 @@ import Button from "../../components/ui/Button";
 import Card, { CardHeading, FieldLabel } from "../../components/ui/Card";
 import { LoadingPanel } from "../../components/ui/Spinner";
 import api, { errorMessage } from "../../api/axios";
+import { eyeFull } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
 import { formatDateTime } from "../../utils/helpers";
 
@@ -101,9 +102,22 @@ const DiagnosisResult = () => {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <Card padding="sm">
+            {/* Laterality labels the image itself rather than sitting in a
+                details list. Which eye you are looking at is part of reading
+                the scan, not metadata to look up afterwards. */}
+            <div className="mb-2 flex items-baseline gap-2 px-1">
+              <span className="text-md font-bold tracking-wide text-cyprus">
+                {diagnosis.eye ? diagnosis.eye.toUpperCase() : "—"}
+              </span>
+              <span className="text-sm text-gray-600">
+                {diagnosis.eye
+                  ? eyeFull(diagnosis.eye).split("—")[1].trim()
+                  : "Eye not recorded"}
+              </span>
+            </div>
             <FundusViewer
               imagePath={`/images/${diagnosis.id}`}
-              alt="Retinal fundus image for this diagnosis"
+              alt={`Retinal fundus image — ${eyeFull(diagnosis.eye)}`}
             />
           </Card>
         </div>

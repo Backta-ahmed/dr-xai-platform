@@ -30,6 +30,20 @@ export const DR_STAGE_CHART_COLORS = [
 
 export const DR_STAGE_NAMES = DR_STAGES.map((s) => s.label);
 
+// Standard ophthalmic laterality. The abbreviation is what a specialist scans
+// for; the plain word is spelled out beside it because reports and records are
+// also read by other clinicians.
+export const EYES = [
+  { value: "od", abbr: "OD", label: "Right eye", full: "OD — right eye" },
+  { value: "os", abbr: "OS", label: "Left eye", full: "OS — left eye" },
+];
+
+export const eyeAbbr = (value) =>
+  EYES.find((e) => e.value === value)?.abbr ?? "—";
+
+export const eyeFull = (value) =>
+  EYES.find((e) => e.value === value)?.full ?? "Not recorded";
+
 export const ROUTES = {
   HOME: "/",
   REQUEST_ACCESS: "/request-access",

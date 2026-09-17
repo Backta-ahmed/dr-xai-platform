@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from app.core.config import settings
+from app.core.database import build_connect_args
 from app.models import Base
 
 # this is the Alembic Config object, which provides
@@ -72,10 +73,14 @@ async def run_async_migrations() -> None:
 
     """
 
+    # connect_args must match the application engine's. Without them, asyncpg
+    # prepares statements that Supabase's transaction-mode pooler cannot honour
+    # across reused backend connections, and migrations fail intermittently.
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=build_connect_args(settings.DATABASE_URL),
     )
 
     async with connectable.connect() as connection:

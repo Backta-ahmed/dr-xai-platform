@@ -1,7 +1,18 @@
+import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -9,6 +20,18 @@ from app.core.database import Base
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class EyeEnum(str, enum.Enum):
+    """Which eye the fundus image is of.
+
+    Standard ophthalmic abbreviations: OD (oculus dexter, right) and OS
+    (oculus sinister, left). There is no "both" value — a fundus photograph
+    captures one eye, so a diagnosis is always about one eye.
+    """
+
+    od = "od"
+    os = "os"
 
 
 class Diagnosis(Base):
@@ -23,6 +46,13 @@ class Diagnosis(Base):
     # Opaque storage key ("sb://<name>" or "file://<name>"), never a public URL.
     # Bytes are served only via /api/v1/images/{diagnosis_id}.
     image_key = Column(Text, nullable=False)
+
+    # Nullable at the database layer but required by the API for new records.
+    # A fundus image without laterality is clinically incomplete — the same
+    # grade means different things in the treated and untreated eye — but rows
+    # imported from an external system may genuinely not carry it, and "unknown"
+    # is more honest than guessing.
+    eye = Column(Enum(EyeEnum, native_enum=False), nullable=True)
 
     dr_stage = Column(Integer, nullable=False)
     dr_label = Column(String(50), nullable=False)

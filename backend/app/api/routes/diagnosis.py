@@ -10,7 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import get_current_doctor_user
 from app.core.database import get_db
-from app.models.diagnosis import Diagnosis
+from app.models.diagnosis import Diagnosis, EyeEnum
 from app.models.patient import Patient
 from app.models.user import User
 from app.schemas.diagnosis import DiagnosisListItem, DiagnosisResponse, DiagnosisUpdate
@@ -25,6 +25,10 @@ router = APIRouter()
 @router.post("/run", response_model=DiagnosisResponse, status_code=status.HTTP_201_CREATED)
 async def run_diagnosis_endpoint(
     patient_id: str = Form(...),
+    # Required for new records even though the column is nullable: a fundus
+    # image whose laterality is unrecorded cannot be compared against a prior
+    # scan of the same eye, which is the whole basis of tracking progression.
+    eye: EyeEnum = Form(...),
     image_file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_doctor: User = Depends(get_current_doctor_user),
@@ -52,6 +56,7 @@ async def run_diagnosis_endpoint(
     diagnosis = Diagnosis(
         patient_id=patient_id,
         doctor_id=current_doctor.id,
+        eye=eye,
         image_key=image_key,
         dr_stage=result.dr_stage,
         dr_label=result.dr_label,
@@ -113,6 +118,7 @@ async def list_diagnoses(
             id=diagnosis.id,
             patient_id=diagnosis.patient_id,
             patient_name=patient_name,
+            eye=diagnosis.eye,
             dr_stage=diagnosis.dr_stage,
             dr_label=diagnosis.dr_label,
             confidence=diagnosis.confidence,

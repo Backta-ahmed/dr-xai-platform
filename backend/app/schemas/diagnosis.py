@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models.diagnosis import EyeEnum
+
 
 class DiagnosisUpdate(BaseModel):
     """Only the clinical notes are editable; model output is immutable."""
@@ -18,6 +20,7 @@ class DiagnosisResponse(BaseModel):
     id: str
     patient_id: str
     doctor_id: str
+    eye: Optional[EyeEnum] = None
     dr_stage: int
     dr_label: str
     confidence: Optional[float] = None
@@ -45,6 +48,7 @@ class DiagnosisListItem(BaseModel):
     id: str
     patient_id: str
     patient_name: str
+    eye: Optional[EyeEnum] = None
     dr_stage: int
     dr_label: str
     confidence: Optional[float] = None

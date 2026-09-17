@@ -7,6 +7,7 @@ import DRStageBadge from "../../components/shared/DRStageBadge";
 import ErrorState from "../../components/shared/ErrorState";
 import SimulationBanner from "../../components/shared/SimulationBanner";
 import api, { errorMessage } from "../../api/axios";
+import { eyeAbbr } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
 import { formatDate } from "../../utils/helpers";
 
@@ -81,6 +82,7 @@ const Reports = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Patient</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Eye</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">DR stage</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Confidence</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-700">Report</th>
@@ -94,6 +96,9 @@ const Reports = () => {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
                       {formatDate(d.created_at)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold tracking-wide text-cyprus">
+                      {eyeAbbr(d.eye)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

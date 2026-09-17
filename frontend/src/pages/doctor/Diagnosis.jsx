@@ -8,6 +8,7 @@ import ErrorState from "../../components/shared/ErrorState";
 import ImageUploader from "../../components/shared/ImageUploader";
 import SimulationBanner from "../../components/shared/SimulationBanner";
 import api, { errorMessage } from "../../api/axios";
+import { EYES } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
 
 const Diagnosis = () => {
@@ -15,6 +16,7 @@ const Diagnosis = () => {
   const [searchParams] = useSearchParams();
 
   const [patientId, setPatientId] = useState(searchParams.get("pid") || "");
+  const [eye, setEye] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -48,14 +50,15 @@ const Diagnosis = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!patientId || !imageFile) {
-      toast.error("Select a patient and upload an image first.");
+    if (!patientId || !eye || !imageFile) {
+      toast.error("Select a patient and eye, and upload an image.");
       return;
     }
 
     setIsAnalyzing(true);
     const formData = new FormData();
     formData.append("patient_id", patientId);
+    formData.append("eye", eye);
     formData.append("image_file", imageFile);
 
     try {
@@ -134,9 +137,52 @@ const Diagnosis = () => {
               )}
             </div>
 
+            <div className="rounded-xl bg-white p-6 shadow-card">
+              <fieldset>
+                <legend className="mb-1 text-lg font-semibold text-gray-900">
+                  Eye examined
+                </legend>
+                <p className="mb-3 text-sm text-gray-600">
+                  A fundus image is of one eye. Recording which one is what
+                  allows this scan to be compared against earlier scans of the
+                  same eye.
+                </p>
+                <div className="flex gap-3">
+                  {EYES.map((option) => {
+                    const active = eye === option.value;
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex flex-1 cursor-pointer flex-col items-center rounded-control border-2 px-4 py-3 transition-colors ${
+                          active
+                            ? "border-cyprus bg-cyprus text-white"
+                            : "border-gray-300 bg-white text-gray-800 hover:border-accent"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="eye"
+                          value={option.value}
+                          checked={active}
+                          onChange={(e) => setEye(e.target.value)}
+                          className="sr-only"
+                        />
+                        <span className="text-md font-bold tracking-wide">
+                          {option.abbr}
+                        </span>
+                        <span className={`text-xs ${active ? "text-white/80" : "text-gray-600"}`}>
+                          {option.label}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            </div>
+
             <button
               type="submit"
-              disabled={!patientId || !imageFile}
+              disabled={!patientId || !eye || !imageFile}
               className="w-full rounded-lg bg-cyprus py-3 text-sm font-medium text-white transition-colors hover:bg-cyprus-light disabled:cursor-not-allowed disabled:opacity-50"
             >
               Run diagnosis

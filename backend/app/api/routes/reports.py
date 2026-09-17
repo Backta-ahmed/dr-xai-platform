@@ -38,6 +38,7 @@ async def get_diagnosis_pdf(
 
     diag_dict = {
         "id": diagnosis.id,
+        "eye": diagnosis.eye.value if diagnosis.eye else None,
         "dr_stage": diagnosis.dr_stage,
         "dr_label": diagnosis.dr_label,
         "confidence": diagnosis.confidence,

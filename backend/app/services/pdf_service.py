@@ -18,6 +18,10 @@ from reportlab.platypus import Paragraph
 
 MARGIN = 50
 
+# Spelled out alongside the abbreviation. OD and OS are unambiguous to an
+# ophthalmologist, but a report is read by other clinicians and by patients.
+EYE_LABELS = {"od": "OD (right eye)", "os": "OS (left eye)"}
+
 
 def _draw_simulation_watermark(c: canvas.Canvas, width: float, height: float) -> None:
     """Diagonal banner across the page for non-clinical output."""
@@ -111,6 +115,10 @@ def generate_pdf_report(diagnosis: dict, patient: dict, doctor: dict) -> io.Byte
     c.setFont("Helvetica-Bold", 13)
     c.drawString(MARGIN, y, "Assessment")
     y -= 22
+
+    c.setFont("Helvetica", 11)
+    c.drawString(MARGIN, y, f"Eye examined: {EYE_LABELS.get(diagnosis.get('eye'), 'Not recorded')}")
+    y -= 20
 
     stage = diagnosis["dr_stage"]
     if stage == 0:
