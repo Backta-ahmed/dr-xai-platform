@@ -4,6 +4,7 @@ import { Eye, FileDown, User } from "lucide-react";
 import toast from "react-hot-toast";
 
 import PageWrapper from "../../components/layout/PageWrapper";
+import ClinicalNotes from "../../components/shared/ClinicalNotes";
 import ErrorState from "../../components/shared/ErrorState";
 import FundusViewer from "../../components/shared/FundusViewer";
 import SimulationBanner from "../../components/shared/SimulationBanner";
@@ -190,14 +191,14 @@ const DiagnosisResult = () => {
             </dl>
           </Card>
 
-          {diagnosis.notes && (
-            <Card padding="sm">
-              <CardHeading as="h3">Clinical notes</CardHeading>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-                {diagnosis.notes}
-              </p>
-            </Card>
-          )}
+          {/* The specialist's own read. This is a second-reader tool, so the
+              assessment that matters most is theirs, not the model's. */}
+          <ClinicalNotes
+            diagnosisId={diagnosis.id}
+            value={diagnosis.notes}
+            onSaved={load}
+          />
+
 
           {/* One primary action. Previously three flex-1 buttons gave download,
               navigation and a new diagnosis identical weight. */}

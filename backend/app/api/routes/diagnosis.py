@@ -160,8 +160,13 @@ async def update_diagnosis(
     if not diagnosis or diagnosis.doctor_id != current_doctor.id:
         raise HTTPException(status_code=404, detail="Diagnosis not found")
 
-    if payload.notes is not None:
-        diagnosis.notes = payload.notes
+    # exclude_unset distinguishes "field omitted" from "field explicitly null".
+    # Testing `is not None` conflated the two, so clearing notes was impossible:
+    # the request returned 200 with the old text still stored, which is the same
+    # silent-no-op that made admin password resets appear to succeed.
+    changes = payload.model_dump(exclude_unset=True)
+    if "notes" in changes:
+        diagnosis.notes = changes["notes"]
 
     await db.commit()
     await db.refresh(diagnosis)
