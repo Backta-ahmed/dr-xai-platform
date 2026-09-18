@@ -12,7 +12,7 @@ import Button from "../../components/ui/Button";
 import Card, { CardHeading, FieldLabel } from "../../components/ui/Card";
 import { LoadingPanel } from "../../components/ui/Spinner";
 import api, { errorMessage } from "../../api/axios";
-import { eyeFull } from "../../constants";
+import { eyeAbbr, eyeFull } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
 import { age, formatDate, formatDateTime } from "../../utils/helpers";
 
@@ -36,10 +36,20 @@ const DiagnosisResult = () => {
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
 
-  const fetchDiagnosis = useCallback(
-    () => api.get(`/diagnosis/${id}`).then((r) => r.data),
-    [id]
-  );
+  // The patient's other scans come back with this one. A specialist reads both
+  // eyes together and against prior visits, so arriving at a single result with
+  // no route to its siblings is a dead end.
+  const fetchDiagnosis = useCallback(async () => {
+    const { data } = await api.get(`/diagnosis/${id}`);
+    let siblings = [];
+    try {
+      const res = await api.get(`/diagnosis/patient/${data.patient_id}`);
+      siblings = (res.data ?? []).filter((d) => d.id !== data.id);
+    } catch {
+      // A failed sibling lookup must not take down the result being read.
+    }
+    return { ...data, siblings };
+  }, [id]);
   const {
     data: diagnosis,
     loading,
@@ -117,6 +127,32 @@ const DiagnosisResult = () => {
         <span className="text-sm text-gray-600">
           · {diagnosis.eye ? eyeFull(diagnosis.eye) : "eye not recorded"}
         </span>
+
+        {/* Other scans for this patient, newest first, fellow eye labelled.
+            Reading one eye in isolation is not how the disease is assessed. */}
+        {diagnosis.siblings?.length > 0 && (
+          <span className="ml-auto flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-gray-600">Other scans:</span>
+            {diagnosis.siblings.slice(0, 4).map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => navigate(`/diagnosis/${s.id}`)}
+                title={`${eyeFull(s.eye)} — ${s.dr_label} — ${formatDate(s.created_at)}`}
+                className={`rounded-control border px-2 py-0.5 text-xs font-medium transition-colors hover:border-accent ${
+                  s.eye !== diagnosis.eye
+                    ? "border-accent/50 bg-accent/10 text-cyprus"
+                    : "border-gray-300 bg-white text-gray-700"
+                }`}
+              >
+                {eyeAbbr(s.eye)}
+                <span className="ml-1 font-normal text-gray-600">
+                  {formatDate(s.created_at)}
+                </span>
+              </button>
+            ))}
+          </span>
+        )}
       </div>
 
       {diagnosis.is_simulated && <SimulationBanner className="mb-5" />}

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, FileDown } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -17,6 +18,7 @@ import { useFetch } from "../../hooks/useFetch";
 import { formatDate } from "../../utils/helpers";
 
 const Reports = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [downloadingId, setDownloadingId] = useState(null);
 
@@ -90,8 +92,17 @@ const Reports = () => {
             <TBody>
               {rows.map((d, i) => (
                 <Tr key={d.id} index={i}>
-                  <Td nowrap className="font-medium text-gray-900">
-                    {d.patient_name}
+                  {/* Reports was a dead end: you could download a PDF but not
+                      open the diagnosis it came from. The patient name is the
+                      way through. */}
+                  <Td nowrap>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/diagnosis/${d.id}`)}
+                      className="rounded-sm font-medium text-gray-900 underline-offset-2 hover:text-accent hover:underline"
+                    >
+                      {d.patient_name}
+                    </button>
                   </Td>
                   <Td nowrap className="tabular">
                     {formatDate(d.created_at)}
