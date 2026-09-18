@@ -14,6 +14,11 @@ import api, { errorMessage } from "../../api/axios";
 import { EYES } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
 
+// Matches the server's `le=100` on GET /patients/. A clinician with more than
+// this cannot reach the rest from the dropdown; the real fix is a searchable
+// selector backed by the endpoint's own `search` parameter.
+const PATIENT_FETCH_LIMIT = 100;
+
 const Diagnosis = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -27,7 +32,10 @@ const Diagnosis = () => {
   // indication that anything had failed.
   const fetchSetup = useCallback(async () => {
     const [patientsRes, modelRes] = await Promise.allSettled([
-      api.get("/patients/", { params: { page: 1, limit: 200 } }),
+      // 100 is the server's hard cap on this endpoint. Asking for 200 made the
+      // request 422, which took out the whole patient selector and made running
+      // a diagnosis impossible — the page's only job.
+      api.get("/patients/", { params: { page: 1, limit: PATIENT_FETCH_LIMIT } }),
       api.get("/stats/model"),
     ]);
 
