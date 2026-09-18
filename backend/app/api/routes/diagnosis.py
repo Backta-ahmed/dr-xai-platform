@@ -80,7 +80,7 @@ async def run_diagnosis_endpoint(
             "is_simulated": result.is_simulated,
         },
     )
-    return diagnosis
+    return await _with_patient(db, diagnosis)
 
 
 @router.get("/", response_model=dict)
@@ -136,6 +136,22 @@ async def list_diagnoses(
     }
 
 
+async def _with_patient(db: AsyncSession, diagnosis: Diagnosis) -> dict:
+    """Attach patient identity to a diagnosis payload.
+
+    Every clinical view of a study has to say whose study it is. Returning the
+    grade and the eye without a name let the reading page render a result that
+    could not be tied to a patient at all, which is how the wrong record gets
+    acted on.
+    """
+    patient = await db.get(Patient, diagnosis.patient_id)
+    return {
+        **{c.name: getattr(diagnosis, c.name) for c in Diagnosis.__table__.columns},
+        "patient_name": patient.full_name if patient else None,
+        "patient_date_of_birth": patient.date_of_birth if patient else None,
+    }
+
+
 @router.get("/{id}", response_model=DiagnosisResponse)
 async def get_diagnosis(
     id: str,
@@ -145,7 +161,7 @@ async def get_diagnosis(
     diagnosis = await db.get(Diagnosis, id)
     if not diagnosis or diagnosis.doctor_id != current_doctor.id:
         raise HTTPException(status_code=404, detail="Diagnosis not found")
-    return diagnosis
+    return await _with_patient(db, diagnosis)
 
 
 @router.patch("/{id}", response_model=DiagnosisResponse)
@@ -170,7 +186,7 @@ async def update_diagnosis(
 
     await db.commit()
     await db.refresh(diagnosis)
-    return diagnosis
+    return await _with_patient(db, diagnosis)
 
 
 @router.get("/patient/{patient_id}", response_model=List[DiagnosisResponse])

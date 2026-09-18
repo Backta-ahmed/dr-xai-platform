@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -20,6 +20,10 @@ class DiagnosisResponse(BaseModel):
     id: str
     patient_id: str
     doctor_id: str
+    # Every clinical view of a study must identify whose study it is. Optional
+    # only so the schema tolerates a deleted patient rather than 500-ing.
+    patient_name: Optional[str] = None
+    patient_date_of_birth: Optional[date] = None
     eye: Optional[EyeEnum] = None
     dr_stage: int
     dr_label: str

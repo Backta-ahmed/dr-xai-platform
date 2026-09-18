@@ -14,7 +14,7 @@ import { LoadingPanel } from "../../components/ui/Spinner";
 import api, { errorMessage } from "../../api/axios";
 import { eyeFull } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
-import { formatDateTime } from "../../utils/helpers";
+import { age, formatDate, formatDateTime } from "../../utils/helpers";
 
 // Wash surface with dark ink, never a solid fill under white text: solid
 // --color-success and --color-warning measure ~2.9:1 against white, so the
@@ -96,6 +96,29 @@ const DiagnosisResult = () => {
 
   return (
     <PageWrapper title="Diagnosis">
+      {/* Patient banner. Standard practice in imaging is that identifiers are
+          visible on every view of a study — without it this page showed an eye
+          and a grade that could not be tied to anyone. */}
+      <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-card border border-cyprus/15 bg-white px-4 py-3">
+        <button
+          type="button"
+          onClick={() => navigate(`/patients/${diagnosis.patient_id}`)}
+          className="text-md font-semibold text-cyprus underline-offset-2 hover:underline"
+        >
+          {diagnosis.patient_name ?? "Unknown patient"}
+        </button>
+        {diagnosis.patient_date_of_birth && (
+          <span className="tabular text-sm text-gray-600">
+            born {formatDate(diagnosis.patient_date_of_birth)}
+            {age(diagnosis.patient_date_of_birth) != null &&
+              ` · ${age(diagnosis.patient_date_of_birth)} years`}
+          </span>
+        )}
+        <span className="text-sm text-gray-600">
+          · {diagnosis.eye ? eyeFull(diagnosis.eye) : "eye not recorded"}
+        </span>
+      </div>
+
       {diagnosis.is_simulated && <SimulationBanner className="mb-5" />}
 
       {/* Image-primary. The clinician reads the retina first and consults the
