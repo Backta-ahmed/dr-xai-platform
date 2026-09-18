@@ -15,7 +15,7 @@ import { LoadingPanel } from "../../components/ui/Spinner";
 import api, { errorMessage } from "../../api/axios";
 import { eyeAbbr } from "../../constants";
 import { useFetch } from "../../hooks/useFetch";
-import { formatDate } from "../../utils/helpers";
+import { diabetesType, formatDate } from "../../utils/helpers";
 
 const PatientDetail = () => {
   const { id } = useParams();
@@ -92,7 +92,7 @@ const PatientDetail = () => {
   const details = [
     ["Date of birth", formatDate(patient.date_of_birth)],
     ["Gender", patient.gender || "—"],
-    ["Diabetes type", patient.diabetes_type || "—"],
+    ["Diabetes type", diabetesType(patient.diabetes_type)],
     [
       "Duration",
       patient.diabetes_duration_years != null

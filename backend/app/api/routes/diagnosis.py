@@ -2,7 +2,7 @@ import logging
 import math
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -15,7 +15,7 @@ from app.models.patient import Patient
 from app.models.user import User
 from app.schemas.diagnosis import DiagnosisListItem, DiagnosisResponse, DiagnosisUpdate
 from app.services import storage_service
-from app.services.audit_service import log_action
+from app.services.audit_service import client_ip, log_action
 from app.services.model_service import get_backend
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ router = APIRouter()
 
 @router.post("/run", response_model=DiagnosisResponse, status_code=status.HTTP_201_CREATED)
 async def run_diagnosis_endpoint(
+    request: Request,
     patient_id: str = Form(...),
     # Required for new records even though the column is nullable: a fundus
     # image whose laterality is unrecorded cannot be compared against a prior
@@ -79,6 +80,10 @@ async def run_diagnosis_endpoint(
             "model": result.model_name,
             "is_simulated": result.is_simulated,
         },
+        # Every other audited action records where it came from. Running a
+        # diagnosis is the most consequential of them and was the only one
+        # logging no origin, so its rows read "—" in the admin audit table.
+        ip_address=client_ip(request),
     )
     return await _with_patient(db, diagnosis)
 

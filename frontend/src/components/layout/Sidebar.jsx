@@ -63,7 +63,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
         <div className="flex h-20 flex-shrink-0 items-center justify-between border-b border-cyprus-light px-4">
           <div className="flex items-center">
             <Eye className="mr-3" size={26} aria-hidden="true" />
-            <span className="text-lg font-semibold tracking-tight">DR Platform</span>
+            <span className="text-lg font-semibold tracking-tight">DR-XAI Platform</span>
           </div>
           <button
             onClick={onClose}

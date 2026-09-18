@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, AlertTriangle, CalendarDays, Eye, Users } from "lucide-react";
 import {
@@ -21,7 +21,8 @@ import { LoadingPanel } from "../../components/ui/Spinner";
 import api from "../../api/axios";
 import { useAuth } from "../../hooks/useAuth";
 import { useFetch } from "../../hooks/useFetch";
-import { DR_STAGE_CHART_COLORS, DR_STAGE_NAMES } from "../../constants";
+import { DR_STAGE_CHART_COLORS } from "../../constants";
+import { fullStageDistribution } from "../../utils/helpers";
 
 // Recharts renders SVG, so axis and label colours cannot come from a Tailwind
 // class. These are the same greys the rest of the page uses for secondary and
@@ -42,6 +43,21 @@ const Dashboard = () => {
     error,
     reload: load,
   } = useFetch(fetchStats, [], "Could not load your dashboard.");
+
+  // All five ICDR stages in severity order, including those with no cases. The
+  // endpoint GROUPs BY, so an empty stage never came back and the plot silently
+  // shrank to however many stages happened to exist — "no proliferative cases"
+  // and "this scale stops at 3" rendered identically.
+  //
+  // Memoised, and above the early returns so the hook order never varies.
+  // Recharts restarts a bar's width animation whenever the data array identity
+  // changes, and rebuilding it every render could leave the bars frozen
+  // part-way through: a count of 2 drawn as a 14px sliver on an axis scaled at
+  // 86px per diagnosis.
+  const chartData = useMemo(
+    () => fullStageDistribution(stats?.dr_stage_distribution),
+    [stats?.dr_stage_distribution]
+  );
 
   if (loading) {
     return (
@@ -73,17 +89,7 @@ const Dashboard = () => {
     },
   ];
 
-  // Sorted by stage, not by count: the ICDR scale is ordinal, so the reading
-  // order of the chart has to be 0 → 4 regardless of how the endpoint returns
-  // the rows. The bar chart replaces a pie, which had no ordering at all and
-  // made two adjacent severities a matter of comparing wedge angles.
-  const chartData = (stats.dr_stage_distribution ?? [])
-    .map((d) => ({
-      name: DR_STAGE_NAMES[d.stage] ?? `Stage ${d.stage}`,
-      value: d.count,
-      stage: d.stage,
-    }))
-    .sort((a, b) => a.stage - b.stage);
+  const hasAnyDiagnoses = chartData.some((d) => d.value > 0);
 
   return (
     // No hardcoded "Dr." prefix: full_name often already contains a title, which
@@ -123,20 +129,29 @@ const Dashboard = () => {
 
       <Card>
         <CardHeading as="h2">DR stage distribution</CardHeading>
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={196}>
+        {hasAnyDiagnoses ? (
+          <ResponsiveContainer width="100%" height={232}>
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ top: 0, right: 32, bottom: 0, left: 0 }}
+              margin={{ top: 0, right: 32, bottom: 18, left: 0 }}
               barCategoryGap="22%"
             >
+              {/* Labelled, because these ticks run 0, 1, 2, 3, 4 — the same
+                  numerals as the ICDR stages named down the other axis, with
+                  nothing saying which axis meant which. */}
               <XAxis
                 type="number"
                 allowDecimals={false}
                 tick={{ fontSize: 11, fill: AXIS_INK }}
                 axisLine={false}
                 tickLine={false}
+                label={{
+                  value: "Diagnoses",
+                  position: "insideBottom",
+                  offset: -4,
+                  style: { fontSize: 11, fill: AXIS_INK },
+                }}
               />
               {/* The stage name stays on the axis: severity is never carried by
                   the bar colour alone. */}
@@ -152,7 +167,7 @@ const Dashboard = () => {
                 cursor={{ fill: "rgba(0,71,65,0.05)" }}
                 formatter={(value) => [value, "Diagnoses"]}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false} isAnimationActive={false}>
                 {chartData.map((entry) => (
                   <Cell
                     key={entry.stage}

@@ -11,7 +11,7 @@ import { controlClass } from "../../components/ui/Field";
 import { LoadingPanel } from "../../components/ui/Spinner";
 import api from "../../api/axios";
 import { useFetch } from "../../hooks/useFetch";
-import { formatDate } from "../../utils/helpers";
+import { diabetesType, formatDate } from "../../utils/helpers";
 
 const Patients = () => {
   const navigate = useNavigate();
@@ -108,7 +108,7 @@ const Patients = () => {
                     {formatDate(patient.date_of_birth)}
                   </Td>
                   <Td nowrap className="capitalize">
-                    {patient.diabetes_type || "—"}
+                    {diabetesType(patient.diabetes_type)}
                   </Td>
                   <Td nowrap className="tabular">
                     {patient.phone || "—"}

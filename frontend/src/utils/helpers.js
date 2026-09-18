@@ -1,4 +1,4 @@
-import { DR_STAGES } from "../constants";
+import { DR_STAGES, DR_STAGE_NAMES } from "../constants";
 
 /** Date only. Returns an em dash for missing or unparseable values. */
 export const formatDate = (value) => {
@@ -50,4 +50,28 @@ export const drStageColor = (stageValue) => {
 export const drStageLabel = (stageValue) => {
   const stage = DR_STAGES.find((s) => s.value === stageValue);
   return stage ? stage.label : "Unknown";
+};
+
+/**
+ * The five ICDR stages in order, with a zero for any stage the API omitted.
+ *
+ * `/admin/stats` and `/stats/me` GROUP BY, so a stage with no diagnoses is
+ * absent from the response and vanished from the chart. That left a plot of
+ * two bars for a five-point clinical scale, where "no proliferative cases" and
+ * "this scale has no stage 4" looked exactly the same.
+ */
+export const fullStageDistribution = (raw) => {
+  const counts = new Map((raw ?? []).map((d) => [d.stage, d.count]));
+  return DR_STAGES.map((s) => ({
+    stage: s.value,
+    name: DR_STAGE_NAMES[s.value] ?? `Stage ${s.value}`,
+    value: counts.get(s.value) ?? 0,
+  }));
+};
+
+/** Diabetes type as a clinician writes it, from the stored enum value. */
+export const diabetesType = (value) => {
+  if (!value) return "—";
+  const map = { type1: "Type 1", type2: "Type 2", gestational: "Gestational", other: "Other" };
+  return map[value] ?? value;
 };

@@ -8,6 +8,7 @@ from sqlalchemy.future import select
 from app.api.deps import get_current_admin_user
 from app.core.database import get_db
 from app.core.security import get_password_hash
+from app.models.access_request import AccessRequest, AccessRequestStatus
 from app.models.diagnosis import Diagnosis
 from app.models.patient import Patient
 from app.models.system_log import SystemLog
@@ -144,6 +145,16 @@ async def get_system_stats(
         )
     ).scalar() or 0
 
+    # The one number on this dashboard that represents work waiting to be done.
+    # Everything else here is a count of things that already happened.
+    pending_requests = (
+        await db.execute(
+            select(func.count())
+            .select_from(AccessRequest)
+            .where(AccessRequest.status == AccessRequestStatus.pending)
+        )
+    ).scalar() or 0
+
     distribution = (
         await db.execute(
             select(Diagnosis.dr_stage, func.count(Diagnosis.id))
@@ -160,6 +171,7 @@ async def get_system_stats(
         "total_patients": total_patients,
         "total_diagnoses": total_diagnoses,
         "simulated_diagnoses": simulated,
+        "pending_access_requests": pending_requests,
         "dr_stage_distribution": [
             {"stage": stage, "count": count} for stage, count in distribution
         ],

@@ -137,7 +137,17 @@ const ManageDoctors = () => {
                   </Td>
                   <Td nowrap>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setPendingToggle(doc)}>
+                      {/* Revoking a clinician's access and resetting their
+                          password sat side by side in identical brand-coloured
+                          ghost buttons. The destructive one now reads as
+                          destructive before it is clicked, not only in the
+                          confirmation dialog it opens. */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPendingToggle(doc)}
+                        className={doc.is_active ? "text-danger-ink hover:bg-danger-wash" : undefined}
+                      >
                         {doc.is_active ? "Deactivate" : "Activate"}
                       </Button>
                       <Button

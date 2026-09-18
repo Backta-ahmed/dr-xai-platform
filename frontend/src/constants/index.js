@@ -54,4 +54,8 @@ export const ROUTES = {
   REPORTS: "/reports",
   PROFILE: "/profile",
   ADMIN: "/admin",
+  ADMIN_DOCTORS: "/admin/doctors",
+  ADMIN_REQUESTS: "/admin/requests",
+  ADMIN_LOGS: "/admin/logs",
+  ADMIN_MODEL: "/admin/ai-model",
 };

@@ -16,6 +16,9 @@ import { useFetch } from "../../hooks/useFetch";
 import { formatDateTime } from "../../utils/helpers";
 
 const STATUS_TONE = { pending: "warning", approved: "success", rejected: "danger" };
+// The badge printed the raw enum value, so the status column read "pending"
+// in lower case beside properly-cased headings and filter tabs.
+const STATUS_LABEL = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
 const FILTERS = [
   ["pending", "Pending"],
   ["approved", "Approved"],
@@ -173,7 +176,7 @@ const AccessRequests = () => {
                   </Td>
                   <Td nowrap>
                     <Badge tone={STATUS_TONE[req.status] ?? "neutral"} size="sm">
-                      {req.status}
+                      {STATUS_LABEL[req.status] ?? req.status}
                     </Badge>
                     {req.reviewer_name && (
                       <span className="mt-1 block text-2xs text-gray-600">

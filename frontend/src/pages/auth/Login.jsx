@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Eye } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -51,23 +51,30 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-sand py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center text-cyprus">
+    <div className="flex min-h-screen flex-col justify-center bg-sand px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-md">
+        {/* The product is "DR-XAI Platform" on the marketing site and in the
+            browser title. This screen called it "DR Diagnosis System" and the
+            sidebar called it "DR Platform" — three names for one product, one
+            of them on the page a paying clinician sees first. */}
+        <Link
+          to={ROUTES.HOME}
+          className="flex flex-col items-center rounded-card text-cyprus focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        >
           <Eye size={44} strokeWidth={1.5} aria-hidden="true" />
-        </div>
-        {/* Was text-3xl font-extrabold — the only extrabold in the codebase, and
-            a step the type scale does not define. text-2xl is the scale's top. */}
-        <h1 className="mt-5 text-center text-2xl font-semibold tracking-tight text-gray-900">
-          DR Diagnosis System
-        </h1>
+          {/* Was text-3xl font-extrabold — the only extrabold in the codebase,
+              and a step the type scale does not define. text-2xl is the top. */}
+          <h1 className="mt-5 text-center text-2xl font-semibold tracking-tight text-gray-900">
+            DR-XAI Platform
+          </h1>
+        </Link>
         <p className="mt-1.5 text-center text-sm text-gray-600">
           Sign in to your clinical account
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="border border-gray-100 bg-white px-4 py-8 shadow-card sm:rounded-card sm:px-10">
+      <div className="mx-auto mt-6 w-full max-w-md">
+        <div className="rounded-card border border-gray-100 bg-white px-5 py-8 shadow-card sm:px-10">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <Field label="Email address" required>
               {(p) => (
@@ -97,6 +104,25 @@ const Login = () => {
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
           </form>
+
+          {/* This screen was a dead end. A clinician who reached it without an
+              account had no route to the application form the platform is
+              gated behind, and one who was locked out had nothing at all —
+              there is no self-service reset, so say who to ask. */}
+          <div className="mt-6 border-t border-gray-100 pt-5 text-center text-sm">
+            <p className="text-gray-600">
+              No account yet?{" "}
+              <Link
+                to={ROUTES.REQUEST_ACCESS}
+                className="rounded-sm font-medium text-accent underline-offset-2 hover:underline"
+              >
+                Request clinical access
+              </Link>
+            </p>
+            <p className="mt-2 text-xs text-gray-600">
+              Locked out? Your platform administrator can reset your password.
+            </p>
+          </div>
         </div>
       </div>
     </div>
