@@ -9,18 +9,19 @@ import { useAuth } from "../../hooks/useAuth";
 import { ROUTES } from "../../constants";
 import { errorMessage } from "../../api/axios";
 
-// The GSAP entrance animation that used to live here has been removed.
+// The entrance here is CSS (`.animate-auth-rise` in index.css), not a tween.
 //
-// It animated `from: { opacity: 0 }`, which parks the element invisible and
-// relies on the tween completing to reveal it. Under React StrictMode's
-// double-invoked effects the context revert could leave the card stuck at zero
-// opacity — the sign-in form was observed rendering fully invisible while
-// present in the DOM. On the one screen every user must pass through every
-// shift, a decorative animation that can lock them out is a bad trade.
+// The GSAP version it replaced animated `from: { opacity: 0 }`, which parks
+// the element invisible and depends on the tween completing to reveal it.
+// Under React StrictMode's double-invoked effects the context revert could
+// leave the card stuck at zero opacity — the sign-in form was observed
+// rendering fully invisible while present in the DOM, with no error to debug
+// from. On the one screen every user passes through every shift, a decorative
+// animation that can lock them out is a bad trade.
 //
-// Anything added here later must animate *from a visible resting state*.
-// The refs the tween targeted are gone too, so there is nothing here inviting
-// it back.
+// A keyframe cannot fail that way: the browser runs it regardless of what
+// JavaScript does, and its resting state is the visible one. Anything added
+// here later must keep that property.
 const Login = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen flex-col justify-center bg-sand px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-md">
+      <div className="animate-auth-rise mx-auto w-full max-w-md">
         {/* The product is "DR-XAI Platform" on the marketing site and in the
             browser title. This screen called it "DR Diagnosis System" and the
             sidebar called it "DR Platform" — three names for one product, one
@@ -73,7 +74,7 @@ const Login = () => {
         </p>
       </div>
 
-      <div className="mx-auto mt-6 w-full max-w-md">
+      <div className="animate-auth-rise-delayed mx-auto mt-6 w-full max-w-md">
         <div className="rounded-card border border-gray-100 bg-white px-5 py-8 shadow-card sm:px-10">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <Field label="Email address" required>

@@ -79,15 +79,54 @@ table,
   font-variant-numeric: tabular-nums;
 }
 
-/* Respect the OS "reduce motion" setting. The app uses spinners, a GSAP intro
-   and hover transforms, which can trigger discomfort for motion-sensitive
-   users. */
+/* Entrance for the sign-in screen.
+   
+   Deliberately CSS rather than a JS tween. The animation this replaces was
+   GSAP `from: { opacity: 0 }`, which parks the element invisible and depends
+   on the tween completing to reveal it — under React StrictMode's doubled
+   effects the context revert could leave the card stuck at zero opacity, and
+   the sign-in form was observed rendering fully invisible while present in
+   the DOM. A keyframe cannot fail that way: the browser runs it regardless of
+   what JavaScript does, and the resting state at 100% is the visible one.
+   
+   `both` fill mode covers the 80ms stagger delay. The whole sequence is under
+   half a second — noticeable as polish, too short to wait on. */
+@keyframes auth-rise {
+  from {
+    /* Not 0. A hidden tab suspends the animation clock — `document.hidden`
+       true, playState "running", currentTime pinned at 0 — and `both` fill
+       then holds the element on this frame for as long as the tab stays in
+       the background. At 0 that is an invisible sign-in form again, by a
+       different route. At 0.4 the worst case is a form that looks dimmed for
+       a moment and still works. */
+    opacity: 0.4;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-auth-rise {
+  animation: auth-rise 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.animate-auth-rise-delayed {
+  animation: auth-rise 420ms cubic-bezier(0.22, 0.61, 0.36, 1) 80ms both;
+}
+
+/* Respect the OS "reduce motion" setting. The app uses spinners, a CSS
+   entrance on the sign-in screen and hover transforms, which can trigger
+   discomfort for motion-sensitive users. The rules below collapse the
+   entrance to effectively zero duration, landing on its visible end state. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
