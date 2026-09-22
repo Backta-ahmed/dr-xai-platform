@@ -165,27 +165,61 @@ const FAQ = [
   ],
 ];
 
-const Section = ({ id, eyebrow, title, lead, children }) => (
-  <section id={id} className="scroll-mt-20 border-t border-cyprus/10 py-16 lg:py-20">
-    {eyebrow && (
-      <p data-reveal className="text-xs font-semibold uppercase tracking-widest text-accent">
-        {eyebrow}
-      </p>
-    )}
-    <h2
-      data-reveal
-      className="mt-2 text-xl font-semibold tracking-tight text-cyprus sm:text-2xl"
-    >
-      {title}
-    </h2>
-    {lead && (
-      <p data-reveal className="mt-3 max-w-prose text-base leading-relaxed text-ink-soft">
-        {lead}
-      </p>
-    )}
-    <div className="mt-8">{children}</div>
-  </section>
-);
+/**
+ * Section tones.
+ *
+ * `deep` is a full-bleed band in cyprus, used once to break what was otherwise
+ * an unbroken cream scroll from the hero to the footer.
+ *
+ * It must never sit directly against the hero: cyprus #004741 and the hero's
+ * cyprus-dark #003330 measure 1.30:1 apart, so adjacent they read as one mass
+ * with a seam rather than two bands. A sand section between them is what makes
+ * the second dark band land as a deliberate return rather than a smudge.
+ */
+const TONES = {
+  sand: {
+    section: "border-t border-cyprus/10",
+    eyebrow: "text-accent",
+    title: "text-cyprus",
+    lead: "text-ink-soft",
+  },
+  deep: {
+    section: "bg-cyprus",
+    eyebrow: "text-white/75",
+    title: "text-white",
+    lead: "text-white/80",
+  },
+};
+
+const Section = ({ id, eyebrow, title, lead, tone = "sand", children }) => {
+  const t = TONES[tone] ?? TONES.sand;
+  return (
+    <section id={id} className={`scroll-mt-20 py-16 lg:py-20 ${t.section}`}>
+      <div className="mx-auto max-w-6xl px-5">
+        {eyebrow && (
+          <p
+            data-reveal
+            className={`text-xs font-semibold uppercase tracking-widest ${t.eyebrow}`}
+          >
+            {eyebrow}
+          </p>
+        )}
+        <h2
+          data-reveal
+          className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${t.title}`}
+        >
+          {title}
+        </h2>
+        {lead && (
+          <p data-reveal className={`mt-3 max-w-prose text-base leading-relaxed ${t.lead}`}>
+            {lead}
+          </p>
+        )}
+        <div className="mt-8">{children}</div>
+      </div>
+    </section>
+  );
+};
 
 /**
  * The only figures on this page that are true today. Every comparable product
@@ -417,8 +451,6 @@ const Home = () => {
         />
       </section>
 
-      <div className="mx-auto max-w-6xl px-5">
-
       <Section
         id="how"
         eyebrow="How it works"
@@ -449,8 +481,13 @@ const Home = () => {
         </ol>
       </Section>
 
+      {/* The one dark band below the hero. This section argues the case for the
+          product, so it is the one worth lifting off the page — and it sits far
+          enough down that it reads as a deliberate return to the brand colour
+          rather than a continuation of the hero. */}
       <Section
         id="why"
+        tone="deep"
         eyebrow="Why DR-XAI"
         title="Designed for the specialist reader"
         lead="You are the referral endpoint, not a screener deciding whether to send someone on. So the platform offers evidence you can inspect, and no opinion about what to do next."
@@ -460,12 +497,12 @@ const Home = () => {
             <div key={title} data-reveal className="flex gap-3.5">
               {React.createElement(icon, {
                 size: 20,
-                className: "mt-0.5 flex-shrink-0 text-accent",
+                className: "mt-0.5 flex-shrink-0 text-white/65",
                 "aria-hidden": "true",
               })}
               <div>
-                <h3 className="text-md font-semibold text-ink">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
+                <h3 className="text-md font-semibold text-white">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-white/80">{body}</p>
               </div>
             </div>
           ))}
@@ -611,7 +648,7 @@ const Home = () => {
       </Section>
 
       <section className="border-t border-cyprus/10 py-14">
-        <div className="flex flex-col items-start gap-5 rounded-card bg-cyprus p-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 rounded-card bg-cyprus p-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-white">
               Request clinician access
@@ -626,7 +663,6 @@ const Home = () => {
           </Link>
         </div>
       </section>
-      </div>
     </main>
 
     <footer className="border-t border-cyprus/10 py-8">
