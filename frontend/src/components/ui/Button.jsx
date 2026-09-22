@@ -14,12 +14,18 @@ const VARIANTS = {
     "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:hover:bg-white",
   danger: "bg-danger text-white hover:bg-danger/90 disabled:hover:bg-danger",
   ghost: "text-accent hover:bg-accent/10 hover:text-cyprus",
+  // For the dark hero band, where every other variant either disappears
+  // into the background or punches a white hole in it.
+  outlineLight:
+    "border border-white/35 text-white hover:border-white/60 hover:bg-white/10",
 };
 
 const SIZES = {
   sm: "px-3 py-1.5 text-xs gap-1.5",
   md: "px-4 py-2 text-sm gap-2",
   lg: "px-5 py-2.5 text-sm gap-2",
+  // Hero scale. Also clears the 44px minimum touch target on its own.
+  xl: "px-7 py-3.5 text-base gap-2.5",
 };
 
 const Button = React.forwardRef(function Button(
