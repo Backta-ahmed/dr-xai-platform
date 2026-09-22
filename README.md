@@ -96,8 +96,6 @@ to change.
 
 ## Project docs
 
-- [`CLAUDE.md`](CLAUDE.md) — conventions, the traps in this stack, and the
-  lessons that cost time.
 - [`ROADMAP.md`](ROADMAP.md) — the feature backlog, each item with its
   justification and sources, plus the open items from the security audit.
 
