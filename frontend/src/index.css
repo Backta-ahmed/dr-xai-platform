@@ -30,6 +30,19 @@
   --color-warning-ink: #8A4B0B;
   --color-success-ink: #146135;
 
+  /* Ink for long-form text on sand. A cold review found the page was using
+     Tailwind's stock slate (#101828 / #364153) below the fold, so the brand
+     visibly stopped at the hero and the rest read as an off-the-shelf
+     template. These are the same neutrals pulled a few degrees toward cyprus.
+     Measured on sand: 13.88:1 and 7.43:1. */
+  --color-ink: #0F241F;
+  --color-ink-soft: #3D4F49;
+
+  /* Warning, lightened for use on dark surfaces only. #E67E22 over the hero's
+     tinted card measures 4.38:1, just under AA; this reads 5.20:1 there. The
+     original stays the warning colour everywhere on light backgrounds. */
+  --color-warning-bright: #F0903A;
+
   /* ── Type scale ───────────────────────────────────────────────────────
      Was absent entirely: 149 of 174 size declarations were text-sm or text-xs,
      with nothing between 14px and 18px, so card headings had no step to reach

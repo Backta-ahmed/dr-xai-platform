@@ -18,6 +18,11 @@ const VARIANTS = {
   // into the background or punches a white hole in it.
   outlineLight:
     "border border-white/35 text-white hover:border-white/60 hover:bg-white/10",
+  // The primary action ON a dark surface. `accent` cannot do this job: #00736B
+  // against cyprus-dark measures 2.42:1, below the 3:1 WCAG 1.4.11 floor for a
+  // control, so the most important button on the page sank into its own
+  // background. Sand on cyprus-dark is 11.83:1, with a 9.07:1 label.
+  onDark: "bg-sand text-cyprus hover:bg-white disabled:hover:bg-sand",
 };
 
 const SIZES = {

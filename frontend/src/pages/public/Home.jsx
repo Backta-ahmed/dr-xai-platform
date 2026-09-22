@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -7,17 +7,19 @@ import {
   FileCheck2,
   Layers,
   Lock,
+  Menu,
   Microscope,
   ScanEye,
   ShieldCheck,
   TriangleAlert,
   Stethoscope,
   Upload,
+  X,
 } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import { ROUTES } from "../../constants";
-import { useCountUp, useReveal } from "../../hooks/useReveal";
+import { useReveal } from "../../hooks/useReveal";
 
 /**
  * Public entry point for a paid clinical service.
@@ -177,7 +179,7 @@ const Section = ({ id, eyebrow, title, lead, children }) => (
       {title}
     </h2>
     {lead && (
-      <p data-reveal className="mt-3 max-w-prose text-base leading-relaxed text-gray-700">
+      <p data-reveal className="mt-3 max-w-prose text-base leading-relaxed text-ink-soft">
         {lead}
       </p>
     )}
@@ -191,41 +193,46 @@ const Section = ({ id, eyebrow, title, lead, children }) => (
  * Evidence section says so. These describe what the platform does rather than
  * how well it does it, which is the honest version of the same move.
  */
-const ProofStrip = () => {
-  const lesionRef = useCountUp(4);
-  const readingsRef = useCountUp(2);
+const PROOF = [
+  ["0–4", "ICDR stages graded, the scale you already report in"],
+  ["4", "Lesion classes marked on the image — EX, HE, MA, SE"],
+  ["2", "Readings on every report: the model's, and yours"],
+];
 
-  return (
-    <section className="border-y border-white/10 bg-cyprus">
-      <dl className="mx-auto grid max-w-6xl grid-cols-1 gap-px overflow-hidden px-5 sm:grid-cols-3">
-        <div className="py-7 sm:pr-8">
-          <dd className="tabular text-3xl font-bold tracking-tight text-white">0–4</dd>
-          <dt className="mt-1 text-sm text-white/70">
-            ICDR stages graded, the scale you already report in
-          </dt>
-        </div>
-        <div className="border-white/10 py-7 sm:border-l sm:px-8">
-          <dd ref={lesionRef} className="tabular text-3xl font-bold tracking-tight text-white">
-            4
-          </dd>
-          <dt className="mt-1 text-sm text-white/70">
-            Lesion classes marked on the image — EX, HE, MA, SE
-          </dt>
-        </div>
-        <div className="border-white/10 py-7 sm:border-l sm:pl-8">
-          <dd ref={readingsRef} className="tabular text-3xl font-bold tracking-tight text-white">
-            2
-          </dd>
-          <dt className="mt-1 text-sm text-white/70">
-            Readings on every report: the model's, and yours
-          </dt>
-        </div>
-      </dl>
-    </section>
-  );
-};
+/**
+ * Inside the hero's dark block rather than a band of its own.
+ *
+ * It previously sat on cyprus (#004741) directly beneath the hero's
+ * cyprus-dark (#003330) — 1.30:1 apart, so two surfaces meant to read as
+ * separate bands looked like one muddy mass with a seam. One dark block with a
+ * hairline divider, and a single transition to the page below it.
+ *
+ * The count-up is gone. Animating a rise to "4" is motion for its own sake,
+ * and it had already needed a fix for settling on the wrong number — a counter
+ * that can land on 3 under the words "lesion classes marked" is worse than no
+ * counter.
+ */
+const ProofStrip = () => (
+  <dl className="mt-14 grid grid-cols-1 gap-8 border-t border-white/15 pt-10 sm:grid-cols-3 sm:gap-6">
+    {PROOF.map(([value, label], i) => (
+      <div key={value} data-reveal className={i > 0 ? "sm:border-l sm:border-white/10 sm:pl-6" : ""}>
+        <dd className="tabular text-3xl font-bold tracking-tight text-white">{value}</dd>
+        <dt className="mt-1.5 text-sm leading-relaxed text-white/70">{label}</dt>
+      </div>
+    ))}
+  </dl>
+);
+
+const NAV = [
+  ["How it works", "#how"],
+  ["Why DR-XAI", "#why"],
+  ["Evidence", "#evidence"],
+  ["Plans", "#plans"],
+  ["FAQ", "#faq"],
+];
 
 const Home = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
   // One scope for the whole page; every [data-reveal] inside it animates in on
   // scroll. See useReveal for why nothing here can end up permanently hidden.
   const scope = useReveal();
@@ -245,14 +252,12 @@ const Home = () => {
             DR-XAI Platform
           </span>
         </Link>
-        <div className="hidden items-center gap-6 md:flex">
-          {[
-            ["How it works", "#how"],
-            ["Why DR-XAI", "#why"],
-            ["Evidence", "#evidence"],
-            ["Plans", "#plans"],
-            ["FAQ", "#faq"],
-          ].map(([label, href]) => (
+        {/* lg, not md. At 768px these five links wrapped onto two lines and the
+            last one sat flush against the Sign in button with no gap at all —
+            an iPad in portrait is a completely mainstream width for a clinician
+            to arrive on. Below lg they move into the disclosure menu. */}
+        <div className="hidden items-center gap-6 lg:flex">
+          {NAV.map(([label, href]) => (
             <a
               key={href}
               href={href}
@@ -269,14 +274,46 @@ const Home = () => {
             </Button>
           </Link>
           <Link to={ROUTES.REQUEST_ACCESS}>
-            <Button variant="accent" size="md" className="px-3 sm:px-4">
+            <Button variant="onDark" size="md" className="px-3 sm:px-4">
               {/* "Request access" is two words too many at 375px. */}
               <span className="sm:hidden">Apply</span>
               <span className="hidden sm:inline">Request access</span>
             </Button>
           </Link>
+          {/* Without this the five section links simply vanished below lg, with
+              no replacement — a phone visitor wanting the pricing or the FAQ
+              had to blind-scroll the whole page to find them. */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="site-menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            // h-11 w-11 = 44px, the touch-target minimum. At h-10 it was 40.
+            className="flex h-11 w-11 items-center justify-center rounded-control border border-white/25 text-white transition-colors hover:bg-white/10 lg:hidden"
+          >
+            {React.createElement(menuOpen ? X : Menu, { size: 18, "aria-hidden": "true" })}
+          </button>
         </div>
       </nav>
+
+      {menuOpen && (
+        <div id="site-menu" className="border-t border-white/10 bg-cyprus-dark lg:hidden">
+          <ul className="mx-auto max-w-6xl px-5 py-2">
+            {NAV.map(([label, href]) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block rounded-control px-2 py-3 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </header>
 
     <main>
@@ -327,7 +364,7 @@ const Home = () => {
 
             <div data-reveal className="mt-9 flex flex-wrap gap-3">
               <Link to={ROUTES.REQUEST_ACCESS}>
-                <Button variant="accent" size="xl">Request clinician access</Button>
+                <Button variant="onDark" size="xl">Request clinician access</Button>
               </Link>
               <a href="#how">
                 <Button variant="outlineLight" size="xl">See how it works</Button>
@@ -343,8 +380,12 @@ const Home = () => {
           {/* Kept beside the headline rather than in a footnote. Someone deciding
               whether to apply should learn this before they scroll. */}
           <aside data-reveal className="lg:col-span-5">
-            <div className="rounded-card border border-warning/45 bg-warning/10 p-6 backdrop-blur-sm">
-              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-warning">
+            {/* Border pulled back and the heading lightened. The orange was the
+                only saturated colour on the screen, so the caveat was winning
+                the first glance over the offer; and #E67E22 on this tinted card
+                measures 4.38:1, just under AA. warning-bright reads 5.20:1. */}
+            <div className="rounded-card border border-warning/30 bg-warning/10 p-6 backdrop-blur-sm">
+              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-warning-bright">
                 <TriangleAlert size={15} aria-hidden="true" />
                 Early access — model in development
               </h2>
@@ -362,10 +403,19 @@ const Home = () => {
               </p>
             </div>
           </aside>
-        </div>
-      </section>
 
-      <ProofStrip />
+          <div className="lg:col-span-12">
+            <ProofStrip />
+          </div>
+        </div>
+
+        {/* The hero-to-page seam was a 9:1 luminance jump made as a hard tile
+            swap. A short fade into the page colour turns it into a handoff. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-sand"
+        />
+      </section>
 
       <div className="mx-auto max-w-6xl px-5">
 
@@ -392,8 +442,8 @@ const Home = () => {
                   "aria-hidden": "true",
                 })}
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-gray-900">{title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-gray-700">{body}</p>
+              <h3 className="mt-3 text-md font-semibold text-ink">{title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
             </li>
           ))}
         </ol>
@@ -414,8 +464,8 @@ const Home = () => {
                 "aria-hidden": "true",
               })}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-gray-700">{body}</p>
+                <h3 className="text-md font-semibold text-ink">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
               </div>
             </div>
           ))}
@@ -445,8 +495,8 @@ const Home = () => {
                   className: "text-accent",
                   "aria-hidden": "true",
                 })}
-                <h3 className="mt-3 text-sm font-semibold text-gray-900">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-gray-700">{body}</p>
+                <h3 className="mt-3 text-md font-semibold text-ink">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
               </div>
             </div>
           ))}
@@ -460,7 +510,7 @@ const Home = () => {
         lead="Sensitivity and specificity will be published here, per grade and per lesion class, once the model has been evaluated on a held-out set. Not before."
       >
         <div data-reveal className="rounded-card border border-dashed border-cyprus/30 bg-white/60 p-6">
-          <p className="max-w-prose text-sm leading-relaxed text-gray-700">
+          <p className="max-w-prose text-sm leading-relaxed text-ink-soft">
             Every result already records which model and which version produced it. So
             when figures do exist, any report can be tied to the exact version behind
             it — including, looking back, every result that came from the placeholder.
@@ -488,7 +538,7 @@ const Home = () => {
               <div className="flex items-baseline justify-between gap-2">
                 <h3
                   className={`text-md font-semibold ${
-                    plan.featured ? "text-white" : "text-gray-900"
+                    plan.featured ? "text-white" : "text-ink"
                   }`}
                 >
                   {plan.name}
@@ -501,7 +551,7 @@ const Home = () => {
               </div>
               <p
                 className={`mt-1 text-sm ${
-                  plan.featured ? "text-white/80" : "text-gray-600"
+                  plan.featured ? "text-white/80" : "text-ink-soft"
                 }`}
               >
                 {plan.blurb}
@@ -515,7 +565,7 @@ const Home = () => {
                 Free
                 <span
                   className={`ml-2 text-xs font-medium ${
-                    plan.featured ? "text-white/70" : "text-gray-600"
+                    plan.featured ? "text-white/70" : "text-ink-soft"
                   }`}
                 >
                   during early access
@@ -532,7 +582,7 @@ const Home = () => {
                       }`}
                       aria-hidden="true"
                     />
-                    <span className={plan.featured ? "text-white/90" : "text-gray-700"}>
+                    <span className={plan.featured ? "text-white/90" : "text-ink-soft"}>
                       {f}
                     </span>
                   </li>
@@ -553,8 +603,8 @@ const Home = () => {
         <dl data-reveal-group className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
           {FAQ.map(([q, a]) => (
             <div key={q} data-reveal>
-              <dt className="text-sm font-semibold text-gray-900">{q}</dt>
-              <dd className="mt-1 text-sm leading-relaxed text-gray-700">{a}</dd>
+              <dt className="text-md font-semibold text-ink">{q}</dt>
+              <dd className="mt-1 text-sm leading-relaxed text-ink-soft">{a}</dd>
             </div>
           ))}
         </dl>
@@ -580,7 +630,7 @@ const Home = () => {
     </main>
 
     <footer className="border-t border-cyprus/10 py-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 text-xs text-gray-600">
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 text-xs text-ink-soft">
         <div className="flex items-center gap-2 text-cyprus">
           <ShieldCheck size={14} aria-hidden="true" />
           <span className="font-medium">Research instrument — not a medical device</span>

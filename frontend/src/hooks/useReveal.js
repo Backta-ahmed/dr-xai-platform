@@ -44,9 +44,19 @@ export const useReveal = (options = {}) => {
 
     // The watchdog is armed before anything is hidden, so every early return
     // below still ends with the content visible.
-    const failsafe = window.setTimeout(() => {
+    //
+    // It kills the tweens first. clearProps alone strips the inline style but
+    // leaves the tween running, and the next tick writes the same value back —
+    // observed leaving six hero elements pinned at opacity 0.54 with the
+    // watchdog firing and changing nothing. A hidden tab suspends
+    // requestAnimationFrame, so a tween started on load can freeze part-way and
+    // never complete; setTimeout still fires there, which is why the rescue
+    // hangs off a timer rather than off GSAP.
+    const rescue = () => {
+      gsap.killTweensOf(targets);
       gsap.set(targets, { clearProps: "opacity,transform,visibility" });
-    }, FAILSAFE_MS);
+    };
+    const failsafe = window.setTimeout(rescue, FAILSAFE_MS);
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
@@ -81,72 +91,9 @@ export const useReveal = (options = {}) => {
       // revert() restores what GSAP recorded, but an interrupted context has
       // been seen to leave a target mid-tween. Clearing unconditionally costs
       // nothing and removes the one failure mode that matters here.
-      gsap.set(targets, { clearProps: "opacity,transform,visibility" });
+      rescue();
     };
   }, [selector, y, duration, stagger]);
 
   return scope;
-};
-
-/**
- * Counts an integer up when it scrolls into view. Returns a ref for the
- * element whose textContent is written.
- *
- * The element must already contain the final value in the markup, so the real
- * number is what shows if this never runs.
- */
-export const useCountUp = (to, { duration = 1.1, suffix = "" } = {}) => {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-
-    const settle = () => {
-      el.textContent = `${to}${suffix}`;
-    };
-    const failsafe = window.setTimeout(settle, FAILSAFE_MS);
-
-    // Set when the tween starts, so the true value lands whether or not the
-    // tween ever completes. Observed stuck on 3 of 4: a fast scroll past the
-    // strip interrupted the tween, and `once: true` meant it never re-ran. A
-    // count-up that can settle on the wrong number is worse than no count-up
-    // at all — this one sits under the words "lesion classes marked".
-    let landing;
-
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const counter = { value: 0 };
-        gsap.to(counter, {
-          value: to,
-          duration,
-          ease: "power1.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 90%",
-            once: true,
-            onEnter: () => {
-              window.clearTimeout(landing);
-              landing = window.setTimeout(settle, duration * 1000 + 400);
-            },
-          },
-          onUpdate: () => {
-            el.textContent = `${Math.round(counter.value)}${suffix}`;
-          },
-          onComplete: settle,
-          onInterrupt: settle,
-        });
-      });
-    }, el);
-
-    return () => {
-      window.clearTimeout(failsafe);
-      window.clearTimeout(landing);
-      ctx.revert();
-      settle();
-    };
-  }, [to, duration, suffix]);
-
-  return ref;
 };
