@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 
+import FundusIllustration from "../../components/public/FundusIllustration";
 import Button from "../../components/ui/Button";
 import { ROUTES } from "../../constants";
 
@@ -78,21 +79,30 @@ const DIFFERENTIATORS = [
   },
 ];
 
+// Photographs are Pexels, which permits commercial use without attribution.
+// They illustrate the settings the platform is used in; they are not customers,
+// and nothing on the page presents them as endorsing it.
 const AUDIENCES = [
   {
     icon: Stethoscope,
     title: "Individual ophthalmologists",
     body: "Screening clinics and private practice, where a second read shortens the queue without handing over the judgment.",
+    image: "/img/slit-lamp.jpg",
+    alt: "A patient positioned at a slit lamp during an eye examination.",
   },
   {
     icon: Eye,
     title: "Eye departments",
     body: "Shared patient records within a department, each clinician seeing their own list, with an administrator managing access.",
+    image: "/img/phoropter.jpg",
+    alt: "A clinician adjusting a phoropter in front of a patient in an eye clinic.",
   },
   {
     icon: Microscope,
     title: "Research groups",
     body: "Reproducible grading with model provenance recorded per result, so a cohort can be re-read when the model changes.",
+    image: "/img/research.jpg",
+    alt: "Researchers working at benches in a laboratory.",
   },
 ];
 
@@ -253,6 +263,41 @@ const Home = () => (
         </aside>
       </section>
 
+      {/* The clinical artifact, placed early. Both comparable products put a
+          fundus image near the top rather than photographs of clinicians —
+          what a specialist is evaluating on this page is the reading surface,
+          not the people using it. */}
+      <section className="grid grid-cols-1 items-center gap-9 border-t border-cyprus/10 py-14 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <FundusIllustration />
+        </div>
+        <div className="lg:col-span-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+            What you see
+          </p>
+          <h2 className="mt-2 text-lg font-semibold tracking-tight text-cyprus sm:text-xl">
+            The findings, drawn on the image
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-gray-700">
+            A grade on its own cannot be argued with. This one arrives with the
+            findings behind it marked in place — hard exudates, haemorrhages,
+            microaneurysms and soft exudates, each as its own layer over the scan.
+          </p>
+          <ul className="mt-5 space-y-2.5">
+            {[
+              "Each lesion class toggles independently",
+              "Overlays hold registration to 4× zoom",
+              "Your reading is stored beside the model's, and both go on the report",
+            ].map((line) => (
+              <li key={line} className="flex gap-2.5 text-sm text-gray-700">
+                <Check size={15} className="mt-0.5 flex-shrink-0 text-success" aria-hidden="true" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <Section
         id="how"
         eyebrow="How it works"
@@ -304,15 +349,29 @@ const Home = () => (
 
       <Section id="who" eyebrow="Who it is for" title="Where it fits">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {AUDIENCES.map(({ icon, title, body }) => (
-            <div key={title} className="rounded-card border border-cyprus/15 bg-white p-5">
-              {React.createElement(icon, {
-                size: 20,
-                className: "text-accent",
-                "aria-hidden": "true",
-              })}
-              <h3 className="mt-3 text-sm font-semibold text-gray-900">{title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-gray-700">{body}</p>
+          {AUDIENCES.map(({ icon, title, body, image, alt }) => (
+            <div
+              key={title}
+              className="overflow-hidden rounded-card border border-cyprus/15 bg-white"
+            >
+              <img
+                src={image}
+                alt={alt}
+                width={720}
+                height={540}
+                loading="lazy"
+                decoding="async"
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <div className="p-5">
+                {React.createElement(icon, {
+                  size: 20,
+                  className: "text-accent",
+                  "aria-hidden": "true",
+                })}
+                <h3 className="mt-3 text-sm font-semibold text-gray-900">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-gray-700">{body}</p>
+              </div>
             </div>
           ))}
         </div>
