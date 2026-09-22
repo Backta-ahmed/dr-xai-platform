@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
+  ArrowRight,
   Check,
   Eye,
   FileCheck2,
@@ -17,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import EvidenceFlow from "../../components/public/EvidenceFlow";
 import Button from "../../components/ui/Button";
 import { ROUTES } from "../../constants";
 import { useReveal } from "../../hooks/useReveal";
@@ -206,16 +208,16 @@ const Section = ({ id, eyebrow, title, lead, tone = "sand", children }) => {
         )}
         <h2
           data-reveal
-          className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${t.title}`}
+          className={`mt-2.5 max-w-[22ch] text-2xl font-semibold leading-[1.15] tracking-tight sm:text-[2rem] ${t.title}`}
         >
           {title}
         </h2>
         {lead && (
-          <p data-reveal className={`mt-3 max-w-prose text-base leading-relaxed ${t.lead}`}>
+          <p data-reveal className={`mt-4 max-w-[58ch] text-lg leading-relaxed ${t.lead}`}>
             {lead}
           </p>
         )}
-        <div className="mt-8">{children}</div>
+        <div className="mt-10 lg:mt-12">{children}</div>
       </div>
     </section>
   );
@@ -228,9 +230,9 @@ const Section = ({ id, eyebrow, title, lead, tone = "sand", children }) => {
  * how well it does it, which is the honest version of the same move.
  */
 const PROOF = [
-  ["0–4", "ICDR stages graded, the scale you already report in"],
-  ["4", "Lesion classes marked on the image — EX, HE, MA, SE"],
-  ["2", "Readings on every report: the model's, and yours"],
+  { value: "0–4", label: "ICDR stages graded, the scale you already report in", icon: Activity },
+  { value: "4", label: "Lesion classes marked on the image — EX, HE, MA, SE", icon: Layers },
+  { value: "2", label: "Readings on every report: the model's, and yours", icon: FileCheck2 },
 ];
 
 /**
@@ -247,11 +249,25 @@ const PROOF = [
  * counter.
  */
 const ProofStrip = () => (
-  <dl className="mt-14 grid grid-cols-1 gap-8 border-t border-white/15 pt-10 sm:grid-cols-3 sm:gap-6">
-    {PROOF.map(([value, label], i) => (
-      <div key={value} data-reveal className={i > 0 ? "sm:border-l sm:border-white/10 sm:pl-6" : ""}>
-        <dd className="tabular text-3xl font-bold tracking-tight text-white">{value}</dd>
-        <dt className="mt-1.5 text-sm leading-relaxed text-white/70">{label}</dt>
+  <dl className="mt-10 grid grid-cols-1 gap-7 border-t border-white/15 pt-9 sm:grid-cols-3 sm:gap-8">
+    {PROOF.map(({ value, label, icon }, i) => (
+      <div
+        key={value}
+        data-reveal
+        className={`flex gap-4 ${i > 0 ? "sm:border-l sm:border-white/10 sm:pl-8" : ""}`}
+      >
+        <span
+          aria-hidden="true"
+          className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control border border-white/15 bg-white/[0.06] text-white/70"
+        >
+          {React.createElement(icon, { size: 16 })}
+        </span>
+        <div>
+          <dd className="tabular text-[2rem] font-bold leading-none tracking-tight text-white">
+            {value}
+          </dd>
+          <dt className="mt-2 text-sm leading-relaxed text-white/70">{label}</dt>
+        </div>
       </div>
     ))}
   </dl>
@@ -267,6 +283,16 @@ const NAV = [
 
 const Home = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  // The header sits on the hero's own colour at rest and gains a border and a
+  // blur once the page moves, so it reads as part of the hero until it isn't.
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   // One scope for the whole page; every [data-reveal] inside it animates in on
   // scroll. See useReveal for why nothing here can end up permanently hidden.
   const scope = useReveal();
@@ -276,14 +302,23 @@ const Home = () => {
     {/* Dark, to sit continuously with the hero beneath it rather than cutting
         a pale band across the top of it. It also matches the signed-in
         sidebar, so the product does not change identity at the door. */}
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-cyprus-dark/95 backdrop-blur">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
+    <header
+      className={`sticky top-0 z-30 transition-colors duration-300 ${
+        scrolled
+          ? "border-b border-white/10 bg-cyprus-dark/95 backdrop-blur"
+          : "border-b border-transparent bg-cyprus-dark"
+      }`}
+    >
+      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5">
         {/* nowrap: at 375px "DR-XAI Platform" broke across two lines and pushed
             the header to double height. */}
-        <Link to={ROUTES.HOME} className="flex items-center gap-2.5 text-white">
+        <Link to={ROUTES.HOME} className="flex min-h-11 items-center gap-2.5 text-white">
           <Eye size={22} className="flex-shrink-0" aria-hidden="true" />
+          {/* At 360px the full wordmark plus two buttons plus the menu toggle
+              left the toggle on the viewport edge. "Platform" is the part that
+              carries no information. */}
           <span className="whitespace-nowrap text-sm font-semibold tracking-tight sm:text-md">
-            DR-XAI Platform
+            DR-XAI<span className="hidden xs:inline sm:inline"> Platform</span>
           </span>
         </Link>
         {/* lg, not md. At 768px these five links wrapped onto two lines and the
@@ -295,20 +330,24 @@ const Home = () => {
             <a
               key={href}
               href={href}
-              className="rounded-sm text-sm text-white/75 transition-colors hover:text-white"
+              className="group relative flex min-h-11 items-center rounded-sm text-sm text-white/75 transition-colors hover:text-white"
             >
               {label}
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 bottom-3 h-px origin-left scale-x-0 bg-white/60 transition-transform duration-200 group-hover:scale-x-100"
+              />
             </a>
           ))}
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <Link to={ROUTES.LOGIN}>
-            <Button variant="outlineLight" size="md" className="px-3 sm:px-4">
+            <Button variant="outlineLight" size="md" className="min-h-11 px-3 sm:px-4">
               Sign in
             </Button>
           </Link>
           <Link to={ROUTES.REQUEST_ACCESS}>
-            <Button variant="onDark" size="md" className="px-3 sm:px-4">
+            <Button variant="onDark" size="md" className="min-h-11 px-3 sm:px-4">
               {/* "Request access" is two words too many at 375px. */}
               <span className="sm:hidden">Apply</span>
               <span className="hidden sm:inline">Request access</span>
@@ -332,7 +371,10 @@ const Home = () => {
       </nav>
 
       {menuOpen && (
-        <div id="site-menu" className="border-t border-white/10 bg-cyprus-dark lg:hidden">
+        <div
+          id="site-menu"
+          className="animate-auth-rise border-t border-white/10 bg-cyprus-dark lg:hidden"
+        >
           <ul className="mx-auto max-w-6xl px-5 py-2">
             {NAV.map(([label, href]) => (
               <li key={href}>
@@ -354,7 +396,7 @@ const Home = () => {
       {/* Full-bleed and dark. The page previously opened on a pale grid that
           looked like a document; the first screen now reads as an instrument,
           which is what the product is. */}
-      <section className="relative overflow-hidden bg-cyprus-dark">
+      <section className="relative overflow-x-clip bg-cyprus-dark">
         {/* Depth without introducing a colour: two washes of the existing
             accent and cyprus-light, well below the text contrast path. */}
         <div
@@ -366,8 +408,10 @@ const Home = () => {
           className="pointer-events-none absolute -bottom-52 -left-32 h-[30rem] w-[30rem] rounded-full bg-cyprus-light/30 blur-3xl"
         />
 
-        <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 py-16 lg:grid-cols-12 lg:py-24">
-          <div className="lg:col-span-7">
+        <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 py-16 lg:grid-cols-12 lg:gap-0 lg:py-28">
+          {/* z-10 so the copy always sits above the photograph where they
+              overlap. The image is pulled under this column, never over it. */}
+          <div className="relative z-10 lg:col-span-6">
             <p
               data-reveal
               className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/80"
@@ -396,12 +440,23 @@ const Home = () => {
               overrule it — your assessment is what goes on the report.
             </p>
 
-            <div data-reveal className="mt-9 flex flex-wrap gap-3">
+            {/* One button, one link. Two buttons of equal size made the reader
+                choose between them; the secondary action is a wayfinding aid,
+                not an alternative to applying. */}
+            <div data-reveal className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
               <Link to={ROUTES.REQUEST_ACCESS}>
                 <Button variant="onDark" size="xl">Request clinician access</Button>
               </Link>
-              <a href="#how">
-                <Button variant="outlineLight" size="xl">See how it works</Button>
+              <a
+                href="#how"
+                className="group inline-flex min-h-11 items-center gap-1.5 rounded-sm py-2 text-sm font-medium text-white/80 transition-colors hover:text-white"
+              >
+                See how it works
+                <ArrowRight
+                  size={15}
+                  aria-hidden="true"
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
               </a>
             </div>
 
@@ -411,30 +466,89 @@ const Home = () => {
             </p>
           </div>
 
-          {/* Kept beside the headline rather than in a footnote. Someone deciding
-              whether to apply should learn this before they scroll. */}
-          <aside data-reveal className="lg:col-span-5">
-            {/* Border pulled back and the heading lightened. The orange was the
-                only saturated colour on the screen, so the caveat was winning
-                the first glance over the offer; and #E67E22 on this tinted card
-                measures 4.38:1, just under AA. warning-bright reads 5.20:1. */}
-            <div className="rounded-card border border-warning/30 bg-warning/10 p-6 backdrop-blur-sm">
-              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-warning-bright">
-                <TriangleAlert size={15} aria-hidden="true" />
+          {/* The subject, at the scale the product works at. The warning used to
+              hold this column and was the loudest thing on the screen.
+
+              Graded toward cyprus before it was ever committed, so the warm
+              skin tones do not fight the section, and scrimmed along the left
+              and bottom edges so it reads as part of the hero rather than a
+              photograph pasted onto it. */}
+          {/* Larger than its column and pulled left so it tucks under the copy.
+              It also breaks the right gutter, so the eye runs toward the edge
+              of the screen rather than stopping politely inside the grid.
+              Everything here is lg-only: at narrower widths the two stack and
+              an overlap would put the photograph under the headline. */}
+          <div
+            data-reveal
+            className="relative lg:col-span-6 lg:-ml-24 lg:w-[calc(100%+6rem)] xl:-mr-16 xl:w-[calc(100%+10rem)]"
+          >
+            {/* A soft bloom behind the frame, in the accent, so the image is
+                lit from within the section instead of pasted onto it. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-8 rounded-[2rem] bg-accent/15 blur-3xl"
+            />
+
+            <figure className="relative overflow-hidden rounded-2xl shadow-modal ring-1 ring-white/15">
+              <img
+                src="/img/eye-macro.jpg"
+                alt="Extreme close-up of a human eye, the iris filling the frame."
+                width={1200}
+                height={900}
+                fetchPriority="high"
+                decoding="async"
+                className="aspect-[4/3] w-full object-cover"
+              />
+
+              {/* The left third fades to the hero colour. That is what makes the
+                  overlap safe: where the photograph passes behind the copy it is
+                  effectively the section background, not an image. */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyprus-dark via-cyprus-dark/55 to-transparent lg:via-cyprus-dark/25"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-cyprus-dark/95 via-cyprus-dark/55 to-transparent"
+              />
+
+              {/* white/90 over a deep scrim. At white/70 the brightest pixels
+                  under this strip — pale sclera and skin — pulled the worst case
+                  to 4.45:1, under AA for 11px text. A photograph cannot hold a
+                  contrast ratio on its own. */}
+              <figcaption className="absolute bottom-5 left-6 right-6 text-2xs font-semibold uppercase tracking-widest text-white/90 lg:left-auto lg:right-7 lg:max-w-[20rem] lg:text-right xl:right-24">
+                Diabetic retinopathy · the leading cause of blindness in working-age adults
+              </figcaption>
+            </figure>
+          </div>
+
+          {/* The disclosure keeps every word, and stays above the fold. It
+              reads as a status strip now rather than a second product card —
+              the caveat should be impossible to miss and still lose the first
+              glance to the offer. */}
+          <aside
+            data-reveal
+            className="rounded-card border border-warning/25 bg-warning/[0.07] p-5 lg:col-span-12"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5">
+              <h2 className="flex flex-shrink-0 items-center gap-2 text-2xs font-bold uppercase tracking-widest text-warning-bright">
+                <TriangleAlert size={14} aria-hidden="true" />
                 Early access — model in development
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-white/80">
-                No diagnostic model is connected yet. Every result the platform produces
-                today is randomly generated. It is labelled as simulated wherever it
-                appears and watermarked on every exported report, and it must not inform
-                patient care.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-white/80">
-                The grading, segmentation and explanation pipeline is in development.
-                Accounts are open now so clinicians can work through the workflow before
-                it arrives.{" "}
-                <strong className="text-white">Nothing is billable until it does.</strong>
-              </p>
+              <div className="sm:border-l sm:border-warning/20 sm:pl-5">
+                <p className="text-sm leading-relaxed text-white/80">
+                  No diagnostic model is connected yet. Every result the platform produces
+                  today is randomly generated. It is labelled as simulated wherever it
+                  appears and watermarked on every exported report, and it must not inform
+                  patient care.
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-white/80">
+                  The grading, segmentation and explanation pipeline is in development.
+                  Accounts are open now so clinicians can work through the workflow before
+                  it arrives.{" "}
+                  <strong className="text-white">Nothing is billable until it does.</strong>
+                </p>
+              </div>
             </div>
           </aside>
 
@@ -457,25 +571,26 @@ const Home = () => {
         title="From photograph to signed report"
         lead="Three steps. The reading signed at the end is yours, not the model's."
       >
-        <ol data-reveal-group className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {/* A progression, not three isolated boxes. The rule behind the step
+            markers connects them on desktop and disappears when they stack,
+            where reading order already carries the sequence. */}
+        <ol data-reveal-group className="relative grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-7">
+          <span
+            aria-hidden="true"
+            className="absolute left-0 right-0 top-[22px] hidden h-px bg-cyprus/15 sm:block"
+          />
           {STEPS.map(({ icon, title, body }, i) => (
-            <li
-              key={title}
-              data-reveal
-              className="rounded-card bg-white p-5 shadow-card transition-shadow hover:shadow-raised"
-            >
+            <li key={title} data-reveal className="group relative">
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-cyprus text-xs font-bold text-white">
+                <span className="relative z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-cyprus text-sm font-bold text-white ring-4 ring-sand transition-transform duration-300 group-hover:scale-105">
                   {i + 1}
                 </span>
-                {React.createElement(icon, {
-                  size: 18,
-                  className: "text-accent",
-                  "aria-hidden": "true",
-                })}
+                <span className="flex h-9 w-9 items-center justify-center rounded-control border border-cyprus/15 bg-white text-accent">
+                  {React.createElement(icon, { size: 17, "aria-hidden": "true" })}
+                </span>
               </div>
-              <h3 className="mt-3 text-md font-semibold text-ink">{title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
+              <h3 className="mt-5 text-lg font-semibold tracking-tight text-ink">{title}</h3>
+              <p className="mt-2 max-w-[34ch] text-base leading-relaxed text-ink-soft">{body}</p>
             </li>
           ))}
         </ol>
@@ -492,12 +607,17 @@ const Home = () => {
         title="Designed for the specialist reader"
         lead="You are the referral endpoint, not a screener deciding whether to send someone on. So the platform offers evidence you can inspect, and no opinion about what to do next."
       >
-        <div data-reveal-group className="grid grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2">
+        <EvidenceFlow />
+
+        <div
+          data-reveal-group
+          className="mt-14 grid grid-cols-1 gap-x-10 gap-y-7 border-t border-white/12 pt-10 sm:grid-cols-2"
+        >
           {DIFFERENTIATORS.map(({ icon, title, body }) => (
             <div key={title} data-reveal className="flex gap-3.5">
               {React.createElement(icon, {
-                size: 20,
-                className: "mt-0.5 flex-shrink-0 text-white/65",
+                size: 18,
+                className: "mt-1 flex-shrink-0 text-white/60",
                 "aria-hidden": "true",
               })}
               <div>
@@ -510,31 +630,29 @@ const Home = () => {
       </Section>
 
       <Section id="who" eyebrow="Who it is for" title="Where it fits">
-        <div data-reveal-group className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div data-reveal-group className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-3">
           {AUDIENCES.map(({ icon, title, body, image, alt }) => (
-            <div
-              key={title}
-              data-reveal
-              className="group overflow-hidden rounded-card border border-cyprus/15 bg-white transition-shadow hover:shadow-raised"
-            >
-              <img
-                src={image}
-                alt={alt}
-                width={720}
-                height={540}
-                loading="lazy"
-                decoding="async"
-                className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-              />
-              <div className="p-5">
+            <div key={title} data-reveal className="group">
+              <div className="overflow-hidden rounded-card">
+                <img
+                  src={image}
+                  alt={alt}
+                  width={720}
+                  height={540}
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+              </div>
+              <h3 className="mt-5 flex items-center gap-2.5 text-lg font-semibold tracking-tight text-ink">
                 {React.createElement(icon, {
-                  size: 20,
-                  className: "text-accent",
+                  size: 18,
+                  className: "flex-shrink-0 text-accent",
                   "aria-hidden": "true",
                 })}
-                <h3 className="mt-3 text-md font-semibold text-ink">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
-              </div>
+                {title}
+              </h3>
+              <p className="mt-2 text-base leading-relaxed text-ink-soft">{body}</p>
             </div>
           ))}
         </div>
@@ -546,8 +664,11 @@ const Home = () => {
         title="Performance figures are not published yet"
         lead="Sensitivity and specificity will be published here, per grade and per lesion class, once the model has been evaluated on a held-out set. Not before."
       >
-        <div data-reveal className="rounded-card border border-dashed border-cyprus/30 bg-white/60 p-6">
-          <p className="max-w-prose text-sm leading-relaxed text-ink-soft">
+        <div
+          data-reveal
+          className="rounded-card border-l-4 border-l-accent bg-white px-7 py-6 shadow-card"
+        >
+          <p className="max-w-[62ch] text-base leading-relaxed text-ink-soft">
             Every result already records which model and which version produced it. So
             when figures do exist, any report can be tied to the exact version behind
             it — including, looking back, every result that came from the placeholder.
@@ -566,15 +687,15 @@ const Home = () => {
             <div
               key={plan.name}
               data-reveal
-              className={`flex flex-col rounded-card p-6 ${
+              className={`flex flex-col rounded-card p-7 transition-shadow ${
                 plan.featured
-                  ? "bg-cyprus text-white shadow-raised ring-2 ring-accent"
-                  : "border border-cyprus/15 bg-white shadow-card"
+                  ? "bg-cyprus text-white shadow-raised"
+                  : "border border-cyprus/15 bg-white hover:shadow-card"
               }`}
             >
               <div className="flex items-baseline justify-between gap-2">
                 <h3
-                  className={`text-md font-semibold ${
+                  className={`text-lg font-semibold tracking-tight ${
                     plan.featured ? "text-white" : "text-ink"
                   }`}
                 >
@@ -627,7 +748,7 @@ const Home = () => {
               </ul>
 
               <Link to={ROUTES.REQUEST_ACCESS} className="mt-6 block">
-                <Button variant={plan.featured ? "accent" : "secondary"} fullWidth>
+                <Button variant={plan.featured ? "accent" : "secondary"} fullWidth className="min-h-11">
                   Request access
                 </Button>
               </Link>
@@ -637,23 +758,32 @@ const Home = () => {
       </Section>
 
       <Section id="faq" eyebrow="FAQ" title="Common questions">
-        <dl data-reveal-group className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
-          {FAQ.map(([q, a]) => (
-            <div key={q} data-reveal>
-              <dt className="text-md font-semibold text-ink">{q}</dt>
-              <dd className="mt-1 text-sm leading-relaxed text-ink-soft">{a}</dd>
+        <dl data-reveal-group className="grid grid-cols-1 gap-x-12 sm:grid-cols-2">
+          {FAQ.map(([q, a], i) => (
+            <div
+              key={q}
+              data-reveal
+              className={`py-6 ${i > 1 ? "border-t border-cyprus/10" : "sm:pt-0"} ${
+                i === 1 ? "border-t border-cyprus/10 sm:border-t-0" : ""
+              }`}
+            >
+              <dt className="text-lg font-semibold tracking-tight text-ink">{q}</dt>
+              <dd className="mt-2 max-w-[52ch] text-base leading-relaxed text-ink-soft">{a}</dd>
             </div>
           ))}
         </dl>
       </Section>
 
       <section className="border-t border-cyprus/10 py-14">
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 rounded-card bg-cyprus p-8 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          data-reveal
+          className="mx-auto flex max-w-6xl flex-col items-start gap-6 rounded-xl bg-cyprus px-8 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10"
+        >
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-white">
+            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
               Request clinician access
             </h2>
-            <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/80">
+            <p className="mt-2.5 max-w-[52ch] text-base leading-relaxed text-white/80">
               Submit your registration number and proof of qualification. An
               administrator verifies your credentials before an account is created.
             </p>

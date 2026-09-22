@@ -6,6 +6,10 @@
 @theme {
   --font-sans: "Inter", sans-serif;
 
+  /* 360px phones are still common. This gives the public header a step
+     between "smallest phone" and Tailwind's 640px sm. */
+  --breakpoint-xs: 25rem;   /* 400px */
+
   /* ── Brand ────────────────────────────────────────────────────────────
      Frozen by decision. Hue and shade are not open for revision. */
   --color-cyprus: #004741;
