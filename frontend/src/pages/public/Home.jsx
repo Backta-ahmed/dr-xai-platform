@@ -20,13 +20,16 @@ import { ROUTES } from "../../constants";
 /**
  * Public entry point for a paid clinical service.
  *
- * Structure follows what comparable DR-screening products actually put on their
- * front page — how it works, who it is for, the evidence, the plans — but the
- * angle is different from theirs. Those products sell *automation* to primary
- * care: a verdict in ten seconds, no specialist needed. This one sells to the
- * specialist, so the differentiator is the opposite of automation. It is
- * inspectability: every claim the model makes can be checked against the pixels
- * it came from.
+ * Structure follows what comparable DR-screening products put on their front
+ * page — how it works, who it is for, the evidence, the plans — but the angle is
+ * different. Those products sell *automation* to primary care: a verdict in ten
+ * seconds, no specialist needed. This one sells to the specialist, for whom
+ * automation is not the selling point. Inspectability is: every claim the model
+ * makes can be checked against the pixels it came from.
+ *
+ * The copy addresses the reader directly and avoids talking about competitors,
+ * idiom that does not survive translation, and headings that are clever rather
+ * than clear. Most of this audience does not read English first.
  *
  * Plans are shown because the service is commercial, but they are labelled as
  * not yet billable. No diagnostic model is connected, and charging for a
@@ -38,40 +41,40 @@ const STEPS = [
   {
     icon: Upload,
     title: "Upload",
-    body: "Drop in a fundus photograph and record which eye it is. Accepts JPEG, PNG, TIFF, BMP and WEBP from any camera.",
+    body: "Add a fundus photograph and record which eye it is. JPEG, PNG, TIFF, BMP and WEBP, from any camera.",
   },
   {
     icon: ScanEye,
     title: "Analyse",
-    body: "The pipeline grades the image, segments lesions, and produces an explanation of how it reached that grade.",
+    body: "The image is graded on the ICDR scale, lesions are segmented by class, and an explanation is produced for the grade.",
   },
   {
     icon: FileCheck2,
     title: "Verify and sign",
-    body: "Read the overlays against the image, record your own assessment, and export a report carrying both.",
+    body: "Compare the overlays against the image, write your own assessment, and export a report carrying both.",
   },
 ];
 
 const DIFFERENTIATORS = [
   {
     icon: Layers,
-    title: "Inspectable, not a black box",
-    body: "Lesion masks and explanation heatmaps register over the same viewport as the scan, at the same zoom. You check the model's evidence rather than taking its word.",
+    title: "Evidence, not just a grade",
+    body: "Lesion masks and explanation heatmaps sit over the scan in the same viewport, at the same zoom. Turn them on and off as you read.",
   },
   {
     icon: Microscope,
-    title: "Built for the specialist",
-    body: "No textbook definitions, no referral prompts, no simplified output. The interface assumes you read fundus images for a living.",
+    title: "No simplification",
+    body: "No textbook definitions, no referral prompts, no plain-language summary. The interface assumes you read fundus images for a living.",
   },
   {
     icon: Activity,
-    title: "Per-eye longitudinal record",
-    body: "Every diagnosis is recorded against a patient and an eye, so a scan can be read against earlier scans of the same eye.",
+    title: "A record per eye, over time",
+    body: "Every result is filed against a patient and a specific eye, so today's scan can be read against earlier scans of that same eye.",
   },
   {
     icon: Lock,
-    title: "Records stay yours",
-    body: "Patients and diagnoses are visible only to the clinician who created them. Images are served through authenticated routes, never public links, and every access is logged.",
+    title: "Your patients stay yours",
+    body: "Patients and results are visible only to the clinician who created them. Images are served through authenticated requests, never public links, and every access is written to an audit log.",
   },
 ];
 
@@ -79,7 +82,7 @@ const AUDIENCES = [
   {
     icon: Stethoscope,
     title: "Individual ophthalmologists",
-    body: "Screening clinics and private practice, where a second read shortens the queue without outsourcing the judgment.",
+    body: "Screening clinics and private practice, where a second read shortens the queue without handing over the judgment.",
   },
   {
     icon: Eye,
@@ -133,11 +136,11 @@ const PLANS = [
 const FAQ = [
   [
     "Who can get an account?",
-    "Qualified ophthalmologists. Every application is checked against a medical licence or specialist certificate before access is granted — there is no self-service sign-up.",
+    "Qualified ophthalmologists. Every application is checked against a medical licence or specialist certificate before access is granted. There is no self-service sign-up.",
   ],
   [
     "Does it replace my reading?",
-    "No, and it is not built to. The model is a second reader whose evidence you inspect. Your own assessment is recorded alongside its grade and appears on the exported report.",
+    "No, and it is not built to. The model reads second, and you inspect what it based its grade on. Your own assessment is stored alongside it and appears on the exported report.",
   ],
   [
     "Which cameras does it work with?",
@@ -173,9 +176,10 @@ const Home = () => (
         <div className="hidden items-center gap-6 md:flex">
           {[
             ["How it works", "#how"],
-            ["Why it differs", "#why"],
+            ["Why DR-XAI", "#why"],
+            ["Evidence", "#evidence"],
             ["Plans", "#plans"],
-            ["Questions", "#faq"],
+            ["FAQ", "#faq"],
           ].map(([label, href]) => (
             <a
               key={href}
@@ -204,12 +208,12 @@ const Home = () => (
             For ophthalmologists
           </p>
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-cyprus sm:text-[2.35rem] sm:leading-[1.12]">
-            A second reader for diabetic retinopathy that shows its working.
+            Diabetic retinopathy grading you can check against the image.
           </h1>
           <p className="mt-4 max-w-prose text-base leading-relaxed text-gray-700">
-            Most screening tools hand you a grade and ask you to trust it. This one
-            marks the lesions it found, on the image you are already looking at, so
-            the grade is something you can check in seconds rather than accept.
+            The model returns an ICDR grade and marks the lesions behind it, on the
+            same image and at the same zoom you are already working at. Confirm it or
+            overrule it — your assessment is what goes on the report.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
@@ -222,8 +226,8 @@ const Home = () => (
           </div>
 
           <p className="mt-5 max-w-prose text-sm leading-relaxed text-gray-700">
-            Access is restricted to qualified ophthalmologists and granted only after
-            an administrator has verified your credentials.
+            Accounts are for qualified ophthalmologists only. Every application is
+            checked against your medical registration before access is granted.
           </p>
         </div>
 
@@ -235,14 +239,15 @@ const Home = () => (
               Early access — model in development
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-warning-ink/90">
-              No diagnostic model is connected yet. Results produced today are
-              randomly generated, marked as simulated everywhere they appear, and
-              watermarked on every exported report. They must not inform patient care.
+              No diagnostic model is connected yet. Every result the platform produces
+              today is randomly generated. It is labelled as simulated wherever it
+              appears and watermarked on every exported report, and it must not inform
+              patient care.
             </p>
             <p className="mt-3 text-sm leading-relaxed text-warning-ink/90">
-              The classification, segmentation and explanation pipeline is being
-              built. Accounts are being granted now so the clinical workflow can be
-              reviewed before it lands. <strong>Nothing is billable until it does.</strong>
+              The grading, segmentation and explanation pipeline is in development.
+              Accounts are open now so clinicians can work through the workflow before
+              it arrives. <strong>Nothing is billable until it does.</strong>
             </p>
           </div>
         </aside>
@@ -251,8 +256,8 @@ const Home = () => (
       <Section
         id="how"
         eyebrow="How it works"
-        title="Three steps, and the third is the point"
-        lead="The first two are what every screening tool does. The third is what this one is for."
+        title="From photograph to signed report"
+        lead="Three steps. The reading signed at the end is yours, not the model's."
       >
         <ol className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {STEPS.map(({ icon, title, body }, i) => (
@@ -276,9 +281,9 @@ const Home = () => (
 
       <Section
         id="why"
-        eyebrow="Why it differs"
-        title="Built to be checked, not believed"
-        lead="Comparable products sell automation to primary care — a verdict in seconds, no specialist on site. This one sells to the specialist, so it optimises for the opposite property."
+        eyebrow="Why DR-XAI"
+        title="Designed for the specialist reader"
+        lead="You are the referral endpoint, not a screener deciding whether to send someone on. So the platform offers evidence you can inspect, and no opinion about what to do next."
       >
         <div className="grid grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2">
           {DIFFERENTIATORS.map(({ icon, title, body }) => (
@@ -297,7 +302,7 @@ const Home = () => (
         </div>
       </Section>
 
-      <Section id="who" eyebrow="Who it is for" title="Three ways it gets used">
+      <Section id="who" eyebrow="Who it is for" title="Where it fits">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {AUDIENCES.map(({ icon, title, body }) => (
             <div key={title} className="rounded-card border border-cyprus/15 bg-white p-5">
@@ -317,14 +322,13 @@ const Home = () => (
         id="evidence"
         eyebrow="Evidence"
         title="Performance figures are not published yet"
-        lead="Comparable products lead with sensitivity and specificity. Those numbers will appear here, per lesion class and per grade, once the model is trained and evaluated on a held-out set — and not before."
+        lead="Sensitivity and specificity will be published here, per grade and per lesion class, once the model has been evaluated on a held-out set. Not before."
       >
         <div className="rounded-card border border-dashed border-cyprus/30 bg-white/60 p-6">
           <p className="max-w-prose text-sm leading-relaxed text-gray-700">
-            Every result the platform stores already records which model and which
-            version produced it, so when figures do exist they can be tied to exactly
-            the version that generated any given report — including, retrospectively,
-            which results came from the current placeholder.
+            Every result already records which model and which version produced it. So
+            when figures do exist, any report can be tied to the exact version behind
+            it — including, looking back, every result that came from the placeholder.
           </p>
         </div>
       </Section>
@@ -332,8 +336,8 @@ const Home = () => (
       <Section
         id="plans"
         eyebrow="Plans"
-        title="Pricing, once there is something to charge for"
-        lead="Shown so you know what the service will cost. No plan is billable while the model is in development, and early-access accounts are free until it ships."
+        title="Plans and pricing"
+        lead="What the service will cost once it ships. No plan is billable while the model is in development, and early-access accounts are free until then."
       >
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {PLANS.map((plan) => (
@@ -355,7 +359,7 @@ const Home = () => (
                 </h3>
                 {plan.featured && (
                   <span className="rounded-full bg-accent px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-white">
-                    Most asked for
+                    Recommended
                   </span>
                 )}
               </div>
@@ -409,7 +413,7 @@ const Home = () => (
         </div>
       </Section>
 
-      <Section id="faq" eyebrow="Questions" title="Before you apply">
+      <Section id="faq" eyebrow="FAQ" title="Common questions">
         <dl className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
           {FAQ.map(([q, a]) => (
             <div key={q}>
