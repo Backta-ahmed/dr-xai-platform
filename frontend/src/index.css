@@ -43,19 +43,6 @@
      original stays the warning colour everywhere on light backgrounds. */
   --color-warning-bright: #F0903A;
 
-  /* Third brand colour, hue 205.
-     cyprus is hue 175 and accent is hue 176 — one degree apart, the same
-     colour at two lightnesses, which is why sections built from them refused
-     to separate. Marine is a genuinely different hue and carries its weight in
-     every role: 5.29:1 as a label on sand, 6.19:1 with white on it, and enough
-     separation from sand to work as a band. It also sits 175 degrees from the
-     warning orange, so it can never be misread as a caution state.
-     Never place it against cyprus-dark: those two measure 2.24:1 and would
-     merge exactly as the old greens did. */
-  --color-marine: #1A6791;
-  --color-marine-dark: #15597F;
-  --color-marine-light: #2A7FB0;
-
   /* ── Type scale ───────────────────────────────────────────────────────
      Was absent entirely: 149 of 174 size declarations were text-sm or text-xs,
      with nothing between 14px and 18px, so card headings had no step to reach

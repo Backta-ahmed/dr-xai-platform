@@ -165,57 +165,27 @@ const FAQ = [
   ],
 ];
 
-/**
- * Section tones.
- *
- * `marine` is a full-bleed band in the third brand colour. Body text on it is
- * white/80 and never lower: white/70 measures 3.91:1 there, under AA, though
- * the same value is comfortable on the darker hero.
- */
-const TONES = {
-  sand: {
-    section: "border-t border-cyprus/10",
-    eyebrow: "text-marine",
-    title: "text-cyprus",
-    lead: "text-ink-soft",
-  },
-  marine: {
-    section: "bg-marine",
-    eyebrow: "text-white/80",
-    title: "text-white",
-    lead: "text-white/80",
-  },
-};
-
-const Section = ({ id, eyebrow, title, lead, tone = "sand", children }) => {
-  const t = TONES[tone] ?? TONES.sand;
-  return (
-    <section id={id} className={`scroll-mt-20 py-16 lg:py-20 ${t.section}`}>
-      <div className="mx-auto max-w-6xl px-5">
-        {eyebrow && (
-          <p
-            data-reveal
-            className={`text-xs font-semibold uppercase tracking-widest ${t.eyebrow}`}
-          >
-            {eyebrow}
-          </p>
-        )}
-        <h2
-          data-reveal
-          className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${t.title}`}
-        >
-          {title}
-        </h2>
-        {lead && (
-          <p data-reveal className={`mt-3 max-w-prose text-base leading-relaxed ${t.lead}`}>
-            {lead}
-          </p>
-        )}
-        <div className="mt-8">{children}</div>
-      </div>
-    </section>
-  );
-};
+const Section = ({ id, eyebrow, title, lead, children }) => (
+  <section id={id} className="scroll-mt-20 border-t border-cyprus/10 py-16 lg:py-20">
+    {eyebrow && (
+      <p data-reveal className="text-xs font-semibold uppercase tracking-widest text-accent">
+        {eyebrow}
+      </p>
+    )}
+    <h2
+      data-reveal
+      className="mt-2 text-xl font-semibold tracking-tight text-cyprus sm:text-2xl"
+    >
+      {title}
+    </h2>
+    {lead && (
+      <p data-reveal className="mt-3 max-w-prose text-base leading-relaxed text-ink-soft">
+        {lead}
+      </p>
+    )}
+    <div className="mt-8">{children}</div>
+  </section>
+);
 
 /**
  * The only figures on this page that are true today. Every comparable product
@@ -447,6 +417,8 @@ const Home = () => {
         />
       </section>
 
+      <div className="mx-auto max-w-6xl px-5">
+
       <Section
         id="how"
         eyebrow="How it works"
@@ -461,7 +433,7 @@ const Home = () => {
               className="rounded-card bg-white p-5 shadow-card transition-shadow hover:shadow-raised"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-marine text-xs font-bold text-white">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-cyprus text-xs font-bold text-white">
                   {i + 1}
                 </span>
                 {React.createElement(icon, {
@@ -477,13 +449,8 @@ const Home = () => {
         </ol>
       </Section>
 
-      {/* The argument for the product gets its own surface, in the third brand
-          colour. It also breaks what was otherwise one long cream scroll from
-          the hero to the footer. Placed with sand sections on either side —
-          marine against cyprus-dark measures 2.24:1 and the two would merge. */}
       <Section
         id="why"
-        tone="marine"
         eyebrow="Why DR-XAI"
         title="Designed for the specialist reader"
         lead="You are the referral endpoint, not a screener deciding whether to send someone on. So the platform offers evidence you can inspect, and no opinion about what to do next."
@@ -493,13 +460,12 @@ const Home = () => {
             <div key={title} data-reveal className="flex gap-3.5">
               {React.createElement(icon, {
                 size: 20,
-                className: "mt-0.5 flex-shrink-0 text-white/70",
+                className: "mt-0.5 flex-shrink-0 text-accent",
                 "aria-hidden": "true",
               })}
               <div>
-                <h3 className="text-md font-semibold text-white">{title}</h3>
-                {/* white/80, not /70: on marine that is 3.91:1, under AA. */}
-                <p className="mt-1 text-sm leading-relaxed text-white/80">{body}</p>
+                <h3 className="text-md font-semibold text-ink">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
               </div>
             </div>
           ))}
@@ -645,7 +611,7 @@ const Home = () => {
       </Section>
 
       <section className="border-t border-cyprus/10 py-14">
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 rounded-card bg-cyprus p-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col items-start gap-5 rounded-card bg-cyprus p-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-white">
               Request clinician access
@@ -660,6 +626,7 @@ const Home = () => {
           </Link>
         </div>
       </section>
+      </div>
     </main>
 
     <footer className="border-t border-cyprus/10 py-8">
