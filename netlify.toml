@@ -1,9 +1,12 @@
 # Netlify build configuration.
 #
+# This file has to sit at the repository root: Netlify reads it before it knows
+# anything about the project, so inside frontend/ it is never found and the
+# build settings come up blank.
+#
 # `base` is the directory Netlify cd's into before doing anything, so npm finds
-# this package.json rather than looking at the repository root. `publish` is
-# then relative to that base, which is why it reads "dist" and not
-# "frontend/dist".
+# frontend/package.json rather than looking at the root. `publish` is then
+# relative to that base, which is why it reads "dist" and not "frontend/dist".
 
 [build]
   base = "frontend"
