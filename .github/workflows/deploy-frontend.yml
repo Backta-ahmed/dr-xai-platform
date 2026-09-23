@@ -36,7 +36,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
+      # A GitHub project page is served from /<repo>/, so the build is
+      # told its base. Netlify sets nothing and gets the root.
       - run: npm run build
+        env:
+          DEPLOY_BASE: /dr-xai-platform/
 
       # Pages serves static files, so a deep link like /login has no file to
       # match and 404s. GitHub serves 404.html for any unmatched path, so an

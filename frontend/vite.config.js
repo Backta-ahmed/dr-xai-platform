@@ -10,9 +10,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backend = env.VITE_BACKEND_ORIGIN || 'http://localhost:8000'
 
-  // Served from https://<user>.github.io/dr-xai-platform/, so assets need the
-  // repo prefix. Dev stays at / — a base path in dev would break the proxy.
-  const base = mode === 'production' ? '/dr-xai-platform/' : '/'
+  // Where the built site will be served from. Netlify and the dev server both
+  // sit at the root; a GitHub project page sits under /<repo>/, and its
+  // workflow sets DEPLOY_BASE to say so. Every asset URL and the router's
+  // basename derive from this one value, so they cannot disagree.
+  const base = process.env.DEPLOY_BASE || '/'
 
   return {
     base,

@@ -1,0 +1,28 @@
+# Netlify build configuration.
+#
+# `base` is the directory Netlify cd's into before doing anything, so npm finds
+# this package.json rather than looking at the repository root. `publish` is
+# then relative to that base, which is why it reads "dist" and not
+# "frontend/dist".
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# A single-page app has exactly one HTML file. Ask the server for /login and
+# there is no such file on disk, so the natural answer is 404 — which is why
+# the GitHub Pages deploy needed a copy of index.html named 404.html. Here the
+# rule is explicit: serve index.html for any unmatched path and let the router
+# read the URL.
+#
+# status 200, not 301: a redirect would change the address bar and the router
+# would never see the original path. 200 rewrites the response while keeping
+# the URL intact.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

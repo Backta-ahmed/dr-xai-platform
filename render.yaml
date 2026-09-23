@@ -1,0 +1,60 @@
+# Render Blueprint — the backend's deployment, as a file instead of as clicks
+# nobody remembers making.
+#
+# Render reads this from the repository root. Create the service with
+# New -> Blueprint rather than New -> Web Service, or this file is ignored and
+# you end up filling the same fields in by hand.
+
+services:
+  - type: web
+    name: dr-xai-api
+    runtime: python
+    # The repo holds both halves; only this directory is the backend.
+    rootDir: backend
+    plan: free
+    region: frankfurt
+
+    # Migrations run as part of the build, so a schema change cannot be left
+    # behind by a deploy. If a migration fails the build fails, and the old
+    # instance keeps serving — which is the behaviour you want.
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+
+    # 0.0.0.0, not 127.0.0.1: the process must accept connections from outside
+    # its own container. $PORT is assigned by Render at runtime and is not
+    # 8000 — hardcoding a port is the most common reason a first deploy is
+    # marked unhealthy despite the app having started fine.
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+    # Render polls this to tell "booted" from "crashed on startup".
+    healthCheckPath: /health
+
+    envVars:
+      # asyncpg 0.31 has no wheels for the newest Python, and without this the
+      # build fails while trying to compile it from source — an error that
+      # looks like a C toolchain problem rather than a version mismatch.
+      - key: PYTHON_VERSION
+        value: "3.12"
+
+      # Turns off uvicorn's auto-reload file watcher and makes seed.py refuse
+      # to run. See app/core/config.py.
+      - key: ENVIRONMENT
+        value: production
+
+      # The browser blocks a cross-origin API call unless the API names the
+      # calling site here. Origin only — scheme and host, no path, no trailing
+      # slash. Add the Netlify URL to this list once the frontend moves.
+      - key: FRONTEND_ORIGINS
+        value: https://backta-ahmed.github.io
+
+      # sync: false means "prompt me in the dashboard and keep it out of git".
+      # These four are secrets; copy them from backend/.env, except SECRET_KEY,
+      # which should be generated fresh for production:
+      #   python -c "import secrets; print(secrets.token_urlsafe(64))"
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
