@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowRight,
   Check,
+  ChevronDown,
   Eye,
   FileCheck2,
   Layers,
@@ -12,14 +13,12 @@ import {
   Microscope,
   ScanEye,
   ShieldCheck,
-  TriangleAlert,
   Stethoscope,
   Upload,
   X,
 } from "lucide-react";
 
-import EvidenceFlow from "../../components/public/EvidenceFlow";
-import Button from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import { ROUTES } from "../../constants";
 import { useReveal } from "../../hooks/useReveal";
 
@@ -41,23 +40,37 @@ import { useReveal } from "../../hooks/useReveal";
  * not yet billable. No diagnostic model is connected, and charging for a
  * diagnostic service that returns placeholder output would be indefensible —
  * so the status panel stays above the fold until that changes.
+ *
+ * ── On the layout ─────────────────────────────────────────────────────────
+ * The page used to be a stack: every section an eyebrow, a heading, a lead and
+ * a row of cards, full width, nine times over. That shape is why a landing page
+ * reads as assembled rather than designed — the reader learns the rhythm in two
+ * sections and stops looking. Sections now alternate between an editorial split
+ * (the heading held in a narrow left column, the content in a wide well beside
+ * it) and full width, chosen per section by what the content needs: a photo
+ * trio and a four-step flow need the width, an argument and an FAQ do not.
  */
 
 const STEPS = [
   {
     icon: Upload,
-    title: "Upload",
-    body: "Add a fundus photograph and record which eye it is. JPEG, PNG, TIFF, BMP and WEBP, from any camera.",
+    title: "Capture",
+    body: "A fundus photograph enters the workflow with its laterality recorded. JPEG, PNG, TIFF, BMP or WEBP, from any camera.",
   },
   {
     icon: ScanEye,
-    title: "Analyse",
-    body: "The image is graded on the ICDR scale, lesions are segmented by class, and an explanation is produced for the grade.",
+    title: "Inspect",
+    body: "The model marks what it found and where, as layers over the image — evidence you can turn on and off while you read.",
+  },
+  {
+    icon: Microscope,
+    title: "Review",
+    body: "You read the overlays against the photograph at your own zoom, and decide what they amount to.",
   },
   {
     icon: FileCheck2,
-    title: "Verify and sign",
-    body: "Compare the overlays against the image, write your own assessment, and export a report carrying both.",
+    title: "Report",
+    body: "Your interpretation is recorded beside the model's output, and both go on the exported report.",
   },
 ];
 
@@ -108,6 +121,28 @@ const AUDIENCES = [
     body: "Reproducible grading with model provenance recorded per result, so a cohort can be re-read when the model changes.",
     image: "/img/research.jpg",
     alt: "Researchers working at benches in a laboratory.",
+  },
+];
+
+/**
+ * A second tier under the three photographed settings.
+ *
+ * Taken from a competing layout, which listed four audiences as four identical
+ * icon cards. Four equal cards say the four are equally central, and they are
+ * not — the first three are where the product is bought and used, these two are
+ * where it also fits. Flattening that into one row loses the information; a
+ * lighter second row keeps it.
+ */
+const ALSO_FITS = [
+  {
+    icon: Layers,
+    title: "Teaching and review sessions",
+    body: "An inspectable interface makes the reasoning discussable, rather than a grade to take on trust.",
+  },
+  {
+    icon: FileCheck2,
+    title: "One place for the whole read",
+    body: "Image, evidence, interpretation and report stay on the same record instead of in four systems.",
   },
 ];
 
@@ -165,6 +200,25 @@ const FAQ = [
     "Where is patient data stored?",
     "In an access-controlled database, with images in private storage served only through authenticated requests. Nothing is publicly addressable, and every record access is written to an audit log.",
   ],
+  [
+    "What happens when the model ships?",
+    "Early-access accounts carry over with their patient records intact. Results produced during development stay permanently marked as simulated, so nothing from this period can later be mistaken for a real reading.",
+  ],
+];
+
+/**
+ * What gets published in the Evidence section, and what has to be true first.
+ *
+ * This replaces a generic transparency checklist. Every comparable product
+ * leads its evidence section with sensitivity and specificity; this one cannot
+ * yet, and the useful thing to show a specialist is not an apology but the
+ * specification of the figures they will eventually be asked to trust.
+ */
+const WILL_PUBLISH = [
+  "Sensitivity and specificity, reported per ICDR grade rather than pooled.",
+  "Segmentation performance per lesion class — EX, HE, MA and SE separately.",
+  "The held-out set, its size, and how it was partitioned from training data.",
+  "The model version each figure belongs to, so a result can be traced to it.",
 ];
 
 /**
@@ -181,43 +235,86 @@ const FAQ = [
 const TONES = {
   sand: {
     section: "border-t border-cyprus/10",
-    eyebrow: "text-accent",
+    title: "text-cyprus",
+    lead: "text-ink-soft",
+  },
+  light: {
+    section: "border-t border-cyprus/10 bg-sand-light",
     title: "text-cyprus",
     lead: "text-ink-soft",
   },
   deep: {
     section: "bg-cyprus",
-    eyebrow: "text-white/75",
     title: "text-white",
     lead: "text-white/80",
   },
 };
 
-const Section = ({ id, eyebrow, title, lead, tone = "sand", children }) => {
+/**
+ * One section shell, two compositions.
+ *
+ * `split` holds the heading in a narrow left column and gives the content a
+ * wide well beside it — the editorial shape. `sticky` additionally pins that
+ * heading while a tall well scrolls past it, which is only worth doing where
+ * the well is genuinely tall; against a short one the heading appears to stall.
+ *
+ * There is deliberately no eyebrow prop any more. A kicker above every heading
+ * was the loudest template signal on the page, and in every case it was
+ * repeating a word already in the heading beneath it or in the nav link that
+ * brought the reader here.
+ */
+const Section = ({
+  id,
+  title,
+  lead,
+  tone = "sand",
+  split = false,
+  sticky = false,
+  children,
+}) => {
   const t = TONES[tone] ?? TONES.sand;
-  return (
-    <section id={id} className={`scroll-mt-20 py-16 lg:py-20 ${t.section}`}>
-      <div className="mx-auto max-w-6xl px-5">
-        {eyebrow && (
-          <p
-            data-reveal
-            className={`text-xs font-semibold uppercase tracking-widest ${t.eyebrow}`}
-          >
-            {eyebrow}
-          </p>
-        )}
-        <h2
+
+  const head = (
+    <>
+      <h2
+        data-reveal
+        className={`text-pretty text-[1.75rem] font-semibold leading-[1.12] tracking-tight text-balance sm:text-[2.125rem] ${
+          split ? "max-w-[16ch]" : "max-w-[22ch]"
+        } ${t.title}`}
+      >
+        {title}
+      </h2>
+      {lead && (
+        <p
           data-reveal
-          className={`mt-2.5 max-w-[22ch] text-2xl font-semibold leading-[1.15] tracking-tight sm:text-[2rem] ${t.title}`}
+          className={`mt-5 text-base leading-relaxed sm:text-lg ${
+            split ? "max-w-[42ch]" : "max-w-[58ch]"
+          } ${t.lead}`}
         >
-          {title}
-        </h2>
-        {lead && (
-          <p data-reveal className={`mt-4 max-w-[58ch] text-lg leading-relaxed ${t.lead}`}>
-            {lead}
-          </p>
+          {lead}
+        </p>
+      )}
+    </>
+  );
+
+  return (
+    <section id={id} className={`scroll-mt-20 py-16 lg:py-24 ${t.section}`}>
+      <div className="mx-auto max-w-6xl px-5">
+        {split ? (
+          <div className="grid gap-x-12 gap-y-10 lg:grid-cols-12">
+            <div
+              className={`lg:col-span-4 ${sticky ? "lg:sticky lg:top-24 lg:self-start" : ""}`}
+            >
+              {head}
+            </div>
+            <div className="lg:col-span-7 lg:col-start-6">{children}</div>
+          </div>
+        ) : (
+          <>
+            {head}
+            <div className="mt-12 lg:mt-14">{children}</div>
+          </>
         )}
-        <div className="mt-10 lg:mt-12">{children}</div>
       </div>
     </section>
   );
@@ -230,47 +327,67 @@ const Section = ({ id, eyebrow, title, lead, tone = "sand", children }) => {
  * how well it does it, which is the honest version of the same move.
  */
 const PROOF = [
-  { value: "0–4", label: "ICDR stages graded, the scale you already report in", icon: Activity },
-  { value: "4", label: "Lesion classes marked on the image — EX, HE, MA, SE", icon: Layers },
-  { value: "2", label: "Readings on every report: the model's, and yours", icon: FileCheck2 },
+  {
+    value: "0–4",
+    term: "ICDR stages",
+    label: "The severity scale you already report in.",
+    icon: Activity,
+  },
+  {
+    value: "4",
+    term: "Lesion classes",
+    label: "Exudates, haemorrhages, microaneurysms, soft exudates.",
+    icon: Layers,
+  },
+  {
+    value: "2",
+    term: "Readings per report",
+    label: "The model's, and the one you sign.",
+    icon: FileCheck2,
+  },
 ];
 
 /**
- * Inside the hero's dark block rather than a band of its own.
+ * Its own pale band between the hero and the product, rather than the last
+ * block inside the hero.
  *
- * It previously sat on cyprus (#004741) directly beneath the hero's
- * cyprus-dark (#003330) — 1.30:1 apart, so two surfaces meant to read as
- * separate bands looked like one muddy mass with a seam. One dark block with a
- * hairline divider, and a single transition to the page below it.
+ * It lived inside the dark hero because the alternative then was cyprus under
+ * cyprus-dark — 1.30:1, one muddy mass with a seam. On sand there is no such
+ * collision, and lifting it out gives the hero a clean bottom edge and the page
+ * its first change of surface within one screen of scrolling.
  *
- * The count-up is gone. Animating a rise to "4" is motion for its own sake,
- * and it had already needed a fix for settling on the wrong number — a counter
- * that can land on 3 under the words "lesion classes marked" is worse than no
- * counter.
+ * The count-up is gone. Animating a rise to "4" is motion for its own sake, and
+ * it had already needed a fix for settling on the wrong number — a counter that
+ * can land on 3 under the words "lesion classes" is worse than no counter.
  */
 const ProofStrip = () => (
-  <dl className="mt-10 grid grid-cols-1 gap-7 border-t border-white/15 pt-9 sm:grid-cols-3 sm:gap-8">
-    {PROOF.map(({ value, label, icon }, i) => (
-      <div
-        key={value}
-        data-reveal
-        className={`flex gap-4 ${i > 0 ? "sm:border-l sm:border-white/10 sm:pl-8" : ""}`}
-      >
-        <span
-          aria-hidden="true"
-          className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control border border-white/15 bg-white/[0.06] text-white/70"
+  <section className="border-b border-cyprus/10 bg-sand-light">
+    <dl className="mx-auto grid max-w-6xl grid-cols-1 gap-x-8 gap-y-9 px-5 py-12 sm:grid-cols-3 lg:py-14">
+      {PROOF.map(({ value, term, label, icon }, i) => (
+        <div
+          key={value}
+          data-reveal
+          className={`flex items-start gap-4 ${
+            i > 0 ? "sm:border-l sm:border-cyprus/12 sm:pl-8" : ""
+          }`}
         >
-          {React.createElement(icon, { size: 16 })}
-        </span>
-        <div>
-          <dd className="tabular text-[2rem] font-bold leading-none tracking-tight text-white">
-            {value}
-          </dd>
-          <dt className="mt-2 text-sm leading-relaxed text-white/70">{label}</dt>
+          <span
+            aria-hidden="true"
+            className="mt-1.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-control border border-cyprus/15 bg-white text-accent"
+          >
+            {React.createElement(icon, { size: 18 })}
+          </span>
+          <div>
+            <dd className="tabular text-[2.25rem] font-bold leading-none tracking-tight text-cyprus">
+              {value}
+            </dd>
+            <dt className="mt-2.5 text-md font-semibold tracking-tight text-ink">{term}</dt>
+            <p className="mt-1 max-w-[30ch] text-sm leading-relaxed text-ink-soft">{label}</p>
+          </div>
         </div>
-      </div>
-    ))}
-  </dl>
+      ))}
+    </dl>
+  </section>
 );
 
 const NAV = [
@@ -287,6 +404,18 @@ const Home = () => {
   // blur once the page moves, so it reads as part of the hero until it isn't.
   const [scrolled, setScrolled] = useState(false);
 
+  // Escape closes the disclosure menu. Tab order and the toggle both worked,
+  // but Escape is the expected way out of any open panel and its absence reads
+  // as unfinished.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -299,6 +428,15 @@ const Home = () => {
 
   return (
     <div ref={scope} className="min-h-screen bg-sand">
+    {/* First focusable element on the page. Without it a keyboard user tabbed
+        the logo, five nav links and two buttons before reaching any content. */}
+    <a
+      href="#main"
+      className="sr-only rounded-control focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-sand focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-cyprus"
+    >
+      Skip to content
+    </a>
+
     {/* Dark, to sit continuously with the hero beneath it rather than cutting
         a pale band across the top of it. It also matches the signed-in
         sidebar, so the product does not change identity at the door. */}
@@ -341,17 +479,31 @@ const Home = () => {
           ))}
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
-          <Link to={ROUTES.LOGIN}>
-            <Button variant="outlineLight" size="md" className="min-h-11 px-3 sm:px-4">
-              Sign in
-            </Button>
+          {/* The anchor IS the button. A Button component wrapped in a Link
+              nested interactive content inside interactive content — invalid
+              HTML, and it gave every CTA two tab stops at the same
+              coordinates: the anchor, then an inert button on top of it. */}
+          <Link
+            to={ROUTES.LOGIN}
+            className={buttonClass({
+              variant: "outlineLight",
+              size: "md",
+              className: "min-h-11 px-3 sm:px-4",
+            })}
+          >
+            Sign in
           </Link>
-          <Link to={ROUTES.REQUEST_ACCESS}>
-            <Button variant="onDark" size="md" className="min-h-11 px-3 sm:px-4">
-              {/* "Request access" is two words too many at 375px. */}
-              <span className="sm:hidden">Apply</span>
-              <span className="hidden sm:inline">Request access</span>
-            </Button>
+          <Link
+            to={ROUTES.REQUEST_ACCESS}
+            className={buttonClass({
+              variant: "onDark",
+              size: "md",
+              className: "min-h-11 px-3 sm:px-4",
+            })}
+          >
+            {/* "Request access" is two words too many at 375px. */}
+            <span className="sm:hidden">Apply</span>
+            <span className="hidden sm:inline">Request access</span>
           </Link>
           {/* Without this the five section links simply vanished below lg, with
               no replacement — a phone visitor wanting the pricing or the FAQ
@@ -392,64 +544,95 @@ const Home = () => {
       )}
     </header>
 
-    <main>
+    <main id="main">
       {/* Full-bleed and dark. The page previously opened on a pale grid that
           looked like a document; the first screen now reads as an instrument,
           which is what the product is. */}
-      <section className="relative overflow-x-clip bg-cyprus-dark">
-        {/* Depth without introducing a colour: two washes of the existing
-            accent and cyprus-light, well below the text contrast path. */}
+      {/* Full-bleed. The photograph is the section, not an object inside it —
+          a boxed image in a column always reads as an illustration bolted on.
+          The frame is cropped so the eye lands right of centre and the copy
+          gets the calmer side, and the scrim below does the rest. */}
+      <section className="relative isolate overflow-hidden bg-cyprus-dark">
+        {/* Two treatments, because one does not work at both ends.
+            
+            On md+ the photograph is the section background. On a phone the hero
+            stacks to about 1400px tall against a 390px width — an 0.27 aspect
+            that no photograph crops to. Covering it showed an eyelid, not an
+            eye. So small screens get the photograph as a band at its own
+            aspect, with the copy on solid colour beneath it, which is legible
+            and deliberate rather than a desktop layout squeezed. */}
+        {/* Also a background, for the same reason as the wide one below: an
+            <img> with md:hidden still downloads on desktop, so this was costing
+            every desktop visitor the 101KB portrait it never renders. Both are
+            now behind their own media query, and each width fetches exactly
+            one. Decorative — the headline carries the meaning. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-accent/20 blur-3xl"
+          className="h-56 w-full bg-[url('/img/eye-hero-sm.jpg')] bg-cover bg-center bg-no-repeat md:hidden"
         />
+        {/* A CSS background, not an <img>. Two <img> elements toggled with
+            hidden/md:block both download — display:none does not stop a fetch,
+            so every phone was pulling the 223KB wide crop it never shows and
+            every desktop the 101KB portrait. A background inside a md: media
+            query is only fetched when that query matches. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-52 -left-32 h-[30rem] w-[30rem] rounded-full bg-cyprus-light/30 blur-3xl"
+          className="absolute inset-0 -z-10 hidden bg-[url('/img/eye-hero.jpg')] bg-cover bg-right bg-no-repeat md:block"
         />
 
-        <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 py-16 lg:grid-cols-12 lg:gap-0 lg:py-28">
-          {/* z-10 so the copy always sits above the photograph where they
-              overlap. The image is pulled under this column, never over it. */}
-          <div className="relative z-10 lg:col-span-6">
+        {/* Two scrims. The horizontal one carries the copy side; the vertical
+            one keeps the lower edge from competing with the section beneath.
+            Measured, not guessed — see the contrast note in the commit. */}
+        <div
+          aria-hidden="true"
+          // Explicit stops. Full cover across the copy (which ends at ~52% of
+            // the viewport), then clear by 74% so the iris is not sitting under
+            // a third of a layer of green — it was, and it dulled the one thing
+            // the photograph is here for.
+            className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-cyprus-dark from-15% via-cyprus-dark/88 via-50% to-transparent to-74% md:block"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 hidden bg-gradient-to-t from-cyprus-dark/80 via-transparent to-cyprus-dark/45 md:block"
+        />
+
+        {/* Less top padding below md: the band above already gives the section
+            its opening, so the full py-20 left a gap doing nothing. */}
+        <div className="mx-auto max-w-6xl px-5 pb-16 pt-10 md:py-20 lg:py-28">
+          <div className="max-w-[38rem]">
             <p
               data-reveal
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/80"
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-cyprus-dark/40 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/85 backdrop-blur-sm"
             >
               <ScanEye size={13} aria-hidden="true" />
-              For ophthalmologists
+              Clinician-first retinal AI
             </p>
             <h1
               data-reveal
-              // Emphasis by opacity, not by colour. The accent is #00736B,
-              // which measures about 1.9:1 on cyprus-dark — fine as a button
-              // fill behind white text, unusable as text itself. The palette is
-              // frozen, so the second clause simply gets full white against a
-              // dimmed first clause.
-              className="mt-5 text-[2rem] font-bold leading-[1.1] tracking-tight text-white/70 sm:text-[2.75rem] lg:text-[3.15rem]"
+              className="mt-6 text-[2.15rem] font-bold leading-[1.08] tracking-tight text-white/75 sm:text-[2.9rem] lg:text-[3.4rem]"
             >
-              Diabetic retinopathy grading you can{" "}
-              <span className="text-white">check against the image.</span>
+              Inspectable AI evidence for{" "}
+              <span className="text-white">retinal specialists.</span>
             </h1>
             <p
               data-reveal
-              className="mt-5 max-w-prose text-base leading-relaxed text-white/75 sm:text-lg"
+              className="mt-6 max-w-[46ch] text-base leading-relaxed text-white/80 sm:text-lg"
             >
-              The model returns an ICDR grade and marks the lesions behind it, on the
-              same image and at the same zoom you are already working at. Confirm it or
-              overrule it — your assessment is what goes on the report.
+              DR-XAI helps ophthalmologists inspect retinal-image evidence and
+              explanations, so you can make informed decisions while keeping your
+              clinical judgment at the center.
             </p>
 
-            {/* One button, one link. Two buttons of equal size made the reader
-                choose between them; the secondary action is a wayfinding aid,
-                not an alternative to applying. */}
             <div data-reveal className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Link to={ROUTES.REQUEST_ACCESS}>
-                <Button variant="onDark" size="xl">Request clinician access</Button>
+              <Link
+                to={ROUTES.REQUEST_ACCESS}
+                className={buttonClass({ variant: "onDark", size: "xl" })}
+              >
+                Request clinician access
               </Link>
               <a
                 href="#how"
-                className="group inline-flex min-h-11 items-center gap-1.5 rounded-sm py-2 text-sm font-medium text-white/80 transition-colors hover:text-white"
+                className="group inline-flex min-h-11 items-center gap-1.5 rounded-sm py-2 text-sm font-medium text-white/85 transition-colors hover:text-white"
               >
                 See how it works
                 <ArrowRight
@@ -460,130 +643,55 @@ const Home = () => {
               </a>
             </div>
 
-            <p data-reveal className="mt-6 max-w-prose text-sm leading-relaxed text-white/60">
+            <p data-reveal className="mt-6 max-w-[54ch] text-sm leading-relaxed text-white/70">
               Accounts are for qualified ophthalmologists only. Every application is
               checked against your medical registration before access is granted.
             </p>
           </div>
 
-          {/* The subject, at the scale the product works at. The warning used to
-              hold this column and was the loudest thing on the screen.
-
-              Graded toward cyprus before it was ever committed, so the warm
-              skin tones do not fight the section, and scrimmed along the left
-              and bottom edges so it reads as part of the hero rather than a
-              photograph pasted onto it. */}
-          {/* Larger than its column and pulled left so it tucks under the copy.
-              It also breaks the right gutter, so the eye runs toward the edge
-              of the screen rather than stopping politely inside the grid.
-              Everything here is lg-only: at narrower widths the two stack and
-              an overlap would put the photograph under the headline. */}
-          <div
-            data-reveal
-            className="relative lg:col-span-6 lg:-ml-24 lg:w-[calc(100%+6rem)] xl:-mr-16 xl:w-[calc(100%+10rem)]"
-          >
-            {/* A soft bloom behind the frame, in the accent, so the image is
-                lit from within the section instead of pasted onto it. */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -inset-8 rounded-[2rem] bg-accent/15 blur-3xl"
-            />
-
-            <figure className="relative overflow-hidden rounded-2xl shadow-modal ring-1 ring-white/15">
-              <img
-                src="/img/eye-macro.jpg"
-                alt="Extreme close-up of a human eye, the iris filling the frame."
-                width={1200}
-                height={900}
-                fetchPriority="high"
-                decoding="async"
-                className="aspect-[4/3] w-full object-cover"
-              />
-
-              {/* The left third fades to the hero colour. That is what makes the
-                  overlap safe: where the photograph passes behind the copy it is
-                  effectively the section background, not an image. */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyprus-dark via-cyprus-dark/55 to-transparent lg:via-cyprus-dark/25"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-cyprus-dark/95 via-cyprus-dark/55 to-transparent"
-              />
-
-              {/* white/90 over a deep scrim. At white/70 the brightest pixels
-                  under this strip — pale sclera and skin — pulled the worst case
-                  to 4.45:1, under AA for 11px text. A photograph cannot hold a
-                  contrast ratio on its own. */}
-              <figcaption className="absolute bottom-5 left-6 right-6 text-2xs font-semibold uppercase tracking-widest text-white/90 lg:left-auto lg:right-7 lg:max-w-[20rem] lg:text-right xl:right-24">
-                Diabetic retinopathy · the leading cause of blindness in working-age adults
-              </figcaption>
-            </figure>
-          </div>
-
-          {/* The disclosure keeps every word, and stays above the fold. It
-              reads as a status strip now rather than a second product card —
-              the caveat should be impossible to miss and still lose the first
-              glance to the offer. */}
-          <aside
-            data-reveal
-            className="rounded-card border border-warning/25 bg-warning/[0.07] p-5 lg:col-span-12"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5">
-              <h2 className="flex flex-shrink-0 items-center gap-2 text-2xs font-bold uppercase tracking-widest text-warning-bright">
-                <TriangleAlert size={14} aria-hidden="true" />
-                Early access — model in development
-              </h2>
-              <div className="sm:border-l sm:border-warning/20 sm:pl-5">
-                <p className="text-sm leading-relaxed text-white/80">
-                  No diagnostic model is connected yet. Every result the platform produces
-                  today is randomly generated. It is labelled as simulated wherever it
-                  appears and watermarked on every exported report, and it must not inform
-                  patient care.
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-white/80">
-                  The grading, segmentation and explanation pipeline is in development.
-                  Accounts are open now so clinicians can work through the workflow before
-                  it arrives.{" "}
-                  <strong className="text-white">Nothing is billable until it does.</strong>
-                </p>
-              </div>
-            </div>
-          </aside>
-
-          <div className="lg:col-span-12">
-            <ProofStrip />
-          </div>
         </div>
-
-        {/* The hero-to-page seam was a 9:1 luminance jump made as a hard tile
-            swap. A short fade into the page colour turns it into a handoff. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-sand"
-        />
       </section>
+
+      <ProofStrip />
+
 
       <Section
         id="how"
-        eyebrow="How it works"
         title="From photograph to signed report"
-        lead="Three steps. The reading signed at the end is yours, not the model's."
+        lead="Four steps, and the reading signed at the end is yours, not the model's."
       >
-        {/* A progression, not three isolated boxes. The rule behind the step
-            markers connects them on desktop and disappears when they stack,
-            where reading order already carries the sequence. */}
-        <ol data-reveal-group className="relative grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-7">
+        {/* A progression, not four isolated boxes. The rule behind the markers
+            connects them and an arrow sits in each gap, so the row reads left to
+            right as a sequence rather than as four things that happen to be
+            adjacent. Both disappear when the cards stack, where reading order
+            already carries it. */}
+        <ol
+          data-reveal-group
+          className="relative grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4 lg:gap-7"
+        >
+          {/* The connector only appears where the four sit in one row. At two
+              columns or stacked it would point at nothing. */}
           <span
             aria-hidden="true"
-            className="absolute left-0 right-0 top-[22px] hidden h-px bg-cyprus/15 sm:block"
+            className="absolute left-0 right-0 top-[22px] hidden h-px bg-cyprus/15 lg:block"
           />
           {STEPS.map(({ icon, title, body }, i) => (
             <li key={title} data-reveal className="group relative">
+              {/* gap-7 is 28px, so -22px drops the 16px glyph into the middle of
+                  the gap, sitting on the connector rule. */}
+              {i < STEPS.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-[22px] top-[14px] hidden text-cyprus/35 lg:block"
+                >
+                  <ArrowRight size={16} />
+                </span>
+              )}
               <div className="flex items-center gap-3">
-                <span className="relative z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-cyprus text-sm font-bold text-white ring-4 ring-sand transition-transform duration-300 group-hover:scale-105">
-                  {i + 1}
+                {/* The one place a count earns its keep on this page: the order
+                    of these four is itself the information. */}
+                <span className="tabular relative z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-cyprus text-sm font-bold text-white ring-4 ring-sand transition-transform duration-300 group-hover:scale-105">
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="flex h-9 w-9 items-center justify-center rounded-control border border-cyprus/15 bg-white text-accent">
                   {React.createElement(icon, { size: 17, "aria-hidden": "true" })}
@@ -594,6 +702,18 @@ const Home = () => {
             </li>
           ))}
         </ol>
+
+        {/* The sentence the section exists to land, set at display size rather
+            than fenced behind a coloured rule. A heavy left border is the
+            reflex move for a pull quote, and it makes the words read as a
+            callout component instead of as the page's own conclusion. */}
+        <p
+          data-reveal
+          className="mt-16 max-w-[34ch] text-[1.5rem] font-semibold leading-[1.25] tracking-tight text-pretty text-cyprus sm:text-[1.75rem]"
+        >
+          The model supplies evidence. The interpretation, and the responsibility for
+          it, stay with the clinician reading the image.
+        </p>
       </Section>
 
       {/* The one dark band below the hero. This section argues the case for the
@@ -603,15 +723,13 @@ const Home = () => {
       <Section
         id="why"
         tone="deep"
-        eyebrow="Why DR-XAI"
+        split
         title="Designed for the specialist reader"
         lead="You are the referral endpoint, not a screener deciding whether to send someone on. So the platform offers evidence you can inspect, and no opinion about what to do next."
       >
-        <EvidenceFlow />
-
         <div
           data-reveal-group
-          className="mt-14 grid grid-cols-1 gap-x-10 gap-y-7 border-t border-white/12 pt-10 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2"
         >
           {DIFFERENTIATORS.map(({ icon, title, body }) => (
             <div key={title} data-reveal className="flex gap-3.5">
@@ -629,7 +747,9 @@ const Home = () => {
         </div>
       </Section>
 
-      <Section id="who" eyebrow="Who it is for" title="Where it fits">
+      {/* Full width. Three photographs need the room; dropped into an
+          8-column well they crop to letterbox strips. */}
+      <Section id="who" title="Where it fits">
         <div data-reveal-group className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-3">
           {AUDIENCES.map(({ icon, title, body, image, alt }) => (
             <div key={title} data-reveal className="group">
@@ -656,29 +776,62 @@ const Home = () => {
             </div>
           ))}
         </div>
+
+        {/* Deliberately quieter than the row above: a rule, not a card, so the
+            hierarchy between "who buys this" and "where it also fits" survives. */}
+        <div
+          data-reveal-group
+          className="mt-12 grid grid-cols-1 gap-x-10 gap-y-6 border-t border-cyprus/12 pt-8 sm:grid-cols-2"
+        >
+          {ALSO_FITS.map(({ icon, title, body }) => (
+            <div key={title} data-reveal className="flex gap-3.5">
+              {React.createElement(icon, {
+                size: 18,
+                className: "mt-1 flex-shrink-0 text-accent",
+                "aria-hidden": "true",
+              })}
+              <div>
+                <h3 className="text-md font-semibold tracking-tight text-ink">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">{body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </Section>
 
+      {/* Was a paragraph in a bordered box saying "not yet", which is an
+          apology rather than a section. A specialist reading this page is
+          deciding whether these figures will be worth anything when they
+          arrive, so the useful content is the specification of them. */}
       <Section
         id="evidence"
-        eyebrow="Evidence"
+        tone="light"
+        split
         title="Performance figures are not published yet"
-        lead="Sensitivity and specificity will be published here, per grade and per lesion class, once the model has been evaluated on a held-out set. Not before."
+        lead="No sensitivity or specificity appears anywhere on this site, because none has been measured on a held-out set. When it has, this is exactly what goes here."
       >
-        <div
-          data-reveal
-          className="rounded-card border-l-4 border-l-accent bg-white px-7 py-6 shadow-card"
-        >
-          <p className="max-w-[62ch] text-base leading-relaxed text-ink-soft">
-            Every result already records which model and which version produced it. So
-            when figures do exist, any report can be tied to the exact version behind
-            it — including, looking back, every result that came from the placeholder.
-          </p>
-        </div>
+        <ul data-reveal-group>
+          {WILL_PUBLISH.map((item) => (
+            <li
+              key={item}
+              data-reveal
+              className="flex gap-4 border-b border-cyprus/12 py-5 first:border-t"
+            >
+              <Check size={18} className="mt-0.5 flex-shrink-0 text-accent" aria-hidden="true" />
+              <span className="max-w-[56ch] text-base leading-relaxed text-ink">{item}</span>
+            </li>
+          ))}
+        </ul>
+
+        <p data-reveal className="mt-8 max-w-[62ch] text-base leading-relaxed text-ink-soft">
+          Every result already records which model and which version produced it. So when
+          figures do exist, any report can be tied to the exact version behind it —
+          including, looking back, every result that came from the placeholder.
+        </p>
       </Section>
 
       <Section
         id="plans"
-        eyebrow="Plans"
         title="Plans and pricing"
         lead="What the service will cost once it ships. No plan is billable while the model is in development, and early-access accounts are free until then."
       >
@@ -747,31 +900,57 @@ const Home = () => {
                 ))}
               </ul>
 
-              <Link to={ROUTES.REQUEST_ACCESS} className="mt-6 block">
-                <Button variant={plan.featured ? "accent" : "secondary"} fullWidth className="min-h-11">
-                  Request access
-                </Button>
+              <Link
+                to={ROUTES.REQUEST_ACCESS}
+                className={buttonClass({
+                  variant: plan.featured ? "accent" : "secondary",
+                  fullWidth: true,
+                  className: "mt-6 min-h-11",
+                })}
+              >
+                Request access
               </Link>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section id="faq" eyebrow="FAQ" title="Common questions">
-        <dl data-reveal-group className="grid grid-cols-1 gap-x-12 sm:grid-cols-2">
-          {FAQ.map(([q, a], i) => (
-            <div
+      {/* Answers collapsed by default. Five set open as a two-column list ran
+          the section to most of a screen of body text that most visitors skim
+          past; collapsed, all five questions are legible at one glance and the
+          reader opens the one they came for.
+
+          <details>/<summary> rather than a JS accordion: the summary is
+          focusable, operable by Enter and Space, and announced with its
+          expanded state by screen readers without a line of script — and it
+          still works if the bundle fails to load. */}
+      <Section
+        id="faq"
+        tone="light"
+        split
+        sticky
+        title="Common questions"
+        lead="If the answer you need is not here, it will be in the reply to your access request — an administrator reads every one."
+      >
+        <div data-reveal-group>
+          {FAQ.map(([q, a]) => (
+            <details
               key={q}
               data-reveal
-              className={`py-6 ${i > 1 ? "border-t border-cyprus/10" : "sm:pt-0"} ${
-                i === 1 ? "border-t border-cyprus/10 sm:border-t-0" : ""
-              }`}
+              className="group border-b border-cyprus/12 first:border-t"
             >
-              <dt className="text-lg font-semibold tracking-tight text-ink">{q}</dt>
-              <dd className="mt-2 max-w-[52ch] text-base leading-relaxed text-ink-soft">{a}</dd>
-            </div>
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 py-5 text-lg font-semibold tracking-tight text-ink transition-colors hover:text-cyprus [&::-webkit-details-marker]:hidden">
+                {q}
+                <ChevronDown
+                  size={18}
+                  aria-hidden="true"
+                  className="flex-shrink-0 text-accent transition-transform duration-300 group-open:rotate-180"
+                />
+              </summary>
+              <p className="max-w-[58ch] pb-6 text-base leading-relaxed text-ink-soft">{a}</p>
+            </details>
           ))}
-        </dl>
+        </div>
       </Section>
 
       <section className="border-t border-cyprus/10 py-14">
@@ -788,8 +967,15 @@ const Home = () => {
               administrator verifies your credentials before an account is created.
             </p>
           </div>
-          <Link to={ROUTES.REQUEST_ACCESS} className="flex-shrink-0">
-            <Button variant="accent" size="xl">Get started</Button>
+          <Link
+            to={ROUTES.REQUEST_ACCESS}
+            className={buttonClass({
+              variant: "accent",
+              size: "xl",
+              className: "flex-shrink-0",
+            })}
+          >
+            Get started
           </Link>
         </div>
       </section>

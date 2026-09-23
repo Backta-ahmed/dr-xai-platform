@@ -10,7 +10,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backend = env.VITE_BACKEND_ORIGIN || 'http://localhost:8000'
 
+  // Served from https://<user>.github.io/dr-xai-platform/, so assets need the
+  // repo prefix. Dev stays at / — a base path in dev would break the proxy.
+  const base = mode === 'production' ? '/dr-xai-platform/' : '/'
+
   return {
+    base,
     plugins: [react(), tailwindcss()],
     server: {
       open: true,

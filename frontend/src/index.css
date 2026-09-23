@@ -47,6 +47,14 @@
      original stays the warning colour everywhere on light backgrounds. */
   --color-warning-bright: #F0903A;
 
+  /* Focus ring. The accent #00736B measures 2.42:1 on cyprus-dark, under the
+     3:1 WCAG 1.4.11 floor for a focus indicator — so on every dark section a
+     keyboard user could barely see where they were. This one clears the floor
+     on BOTH surfaces the ring lands on: 3.49:1 on cyprus-dark, 3.39:1 on sand.
+     A single hue cannot go much further in either direction without failing
+     the other. */
+  --color-focus: #188F82;
+
   /* ── Type scale ───────────────────────────────────────────────────────
      Was absent entirely: 149 of 174 size declarations were text-sm or text-xs,
      with nothing between 14px and 18px, so card headings had no step to reach
@@ -152,6 +160,35 @@ table,
 /* Visible keyboard focus everywhere. Several controls only styled :focus via
    focus:ring on specific elements, leaving others with no visible indicator. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* The surfaces the browser draws for us still belong to the design system.
+   Selection, the caret and the scrollbar shipped as Chrome blue and Windows
+   grey on a page that is otherwise entirely cyprus and sand — three small
+   places where the brand simply stopped. */
+::selection {
+  background-color: color-mix(in srgb, var(--color-accent) 28%, transparent);
+  color: var(--color-ink);
+}
+
+.bg-cyprus ::selection,
+.bg-cyprus-dark ::selection {
+  background-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  color: #fff;
+}
+
+html {
+  /* Firefox and Chromium both honour this; the second value is the track. */
+  scrollbar-color: var(--color-cyprus-light) var(--color-sand-dark);
+  /* Anchor jumps from the public nav land with motion rather than a cut. The
+     reduced-motion block above already overrides this to auto. */
+  scroll-behavior: smooth;
+}
+
+/* Checkboxes, radios, range thumbs and the text caret. */
+body {
+  accent-color: var(--color-accent);
+  caret-color: var(--color-accent);
 }

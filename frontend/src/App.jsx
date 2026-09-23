@@ -31,8 +31,10 @@ const doctorRoute = (element) => (
 const adminRoute = (element) => <ProtectedRoute role="admin">{element}</ProtectedRoute>;
 
 function App() {
+  // basename comes from Vite's base so the router and the asset paths cannot
+  // drift: on GitHub Pages both are /dr-xai-platform/, in dev both are /.
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <AuthProvider>
         <Toaster
           position="top-right"
