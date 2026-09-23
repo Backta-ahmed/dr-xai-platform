@@ -46,9 +46,10 @@ jobs:
       # Stops Jekyll stripping files and folders that begin with an underscore.
       - run: touch dist/.nojekyll
 
+      # No `enablement: true`. The workflow token cannot create a Pages site —
+      # it fails with "Resource not accessible by integration" — so Pages is
+      # switched on once by hand in Settings, and this only reads the config.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
