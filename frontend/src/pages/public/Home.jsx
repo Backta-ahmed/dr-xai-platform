@@ -105,21 +105,21 @@ const AUDIENCES = [
     icon: Stethoscope,
     title: "Individual ophthalmologists",
     body: "Screening clinics and private practice, where a second read shortens the queue without handing over the judgment.",
-    image: "/img/slit-lamp.jpg",
+    image: `${import.meta.env.BASE_URL}img/slit-lamp.jpg`,
     alt: "A patient positioned at a slit lamp during an eye examination.",
   },
   {
     icon: Eye,
     title: "Eye departments",
     body: "Shared patient records within a department, each clinician seeing their own list, with an administrator managing access.",
-    image: "/img/phoropter.jpg",
+    image: `${import.meta.env.BASE_URL}img/phoropter.jpg`,
     alt: "A clinician adjusting a phoropter in front of a patient in an eye clinic.",
   },
   {
     icon: Microscope,
     title: "Research groups",
     body: "Reproducible grading with model provenance recorded per result, so a cohort can be re-read when the model changes.",
-    image: "/img/research.jpg",
+    image: `${import.meta.env.BASE_URL}img/research.jpg`,
     alt: "Researchers working at benches in a laboratory.",
   },
 ];
@@ -568,7 +568,8 @@ const Home = () => {
             one. Decorative — the headline carries the meaning. */}
         <div
           aria-hidden="true"
-          className="h-56 w-full bg-[url('/img/eye-hero-sm.jpg')] bg-cover bg-center bg-no-repeat md:hidden"
+          style={{ backgroundImage: `url(${import.meta.env.BASE_URL}img/eye-hero-sm.jpg)` }}
+          className="h-56 w-full bg-cover bg-center bg-no-repeat md:hidden"
         />
         {/* A CSS background, not an <img>. Two <img> elements toggled with
             hidden/md:block both download — display:none does not stop a fetch,
@@ -577,7 +578,8 @@ const Home = () => {
             query is only fetched when that query matches. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 hidden bg-[url('/img/eye-hero.jpg')] bg-cover bg-right bg-no-repeat md:block"
+          style={{ backgroundImage: `url(${import.meta.env.BASE_URL}img/eye-hero.jpg)` }}
+          className="absolute inset-0 -z-10 hidden bg-cover bg-right bg-no-repeat md:block"
         />
 
         {/* Two scrims. The horizontal one carries the copy side; the vertical
