@@ -5,6 +5,10 @@
 # Install:  pip install -r requirements.txt
 
 # --- Web framework ---
+# starlette is imported directly by two route modules but deliberately not
+# listed: fastapi pins an exact starlette version, and a second pin here would
+# either duplicate it or collide with it on the next fastapi bump. It is
+# guaranteed installed as fastapi's own dependency.
 fastapi==0.136.0
 uvicorn[standard]==0.45.0
 python-multipart==0.0.26
@@ -18,6 +22,12 @@ aiosqlite==0.22.1
 # --- Validation / settings ---
 pydantic==2.13.3
 pydantic-settings==2.14.0
+# EmailStr in schemas/user.py and schemas/access_request.py needs this, and
+# pydantic does not pull it in — it raises at import time instead:
+#   ImportError: email-validator is not installed
+# It was present locally as somebody else's transitive dependency, so nothing
+# failed until a clean install on the deploy host.
+email-validator==2.3.0
 
 # --- Auth ---
 python-jose[cryptography]==3.5.0
