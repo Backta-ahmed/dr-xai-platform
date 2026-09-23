@@ -28,7 +28,14 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Escaped, because alembic keeps this in a ConfigParser and ConfigParser
+# treats % as interpolation syntax. The Supabase password is percent-encoded —
+# Ah12%24%23... — so the raw URL makes it raise
+#   ValueError: invalid interpolation syntax ... at position 55
+# pointing at the first %2. Doubling each % stores it literally; every read
+# back through get_main_option or get_section un-escapes it, so the URL the
+# engine finally receives is unchanged.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

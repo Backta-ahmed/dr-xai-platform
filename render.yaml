@@ -44,7 +44,7 @@ services:
       # calling site here. Origin only — scheme and host, no path, no trailing
       # slash. Add the Netlify URL to this list once the frontend moves.
       - key: FRONTEND_ORIGINS
-        value: https://backta-ahmed.github.io
+        value: https://dr-xai-platform.netlify.app,https://backta-ahmed.github.io
 
       # sync: false means "prompt me in the dashboard and keep it out of git".
       # These four are secrets; copy them from backend/.env, except SECRET_KEY,
