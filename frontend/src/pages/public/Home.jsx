@@ -299,7 +299,7 @@ const Section = ({
 
   return (
     <section id={id} className={`scroll-mt-20 py-16 lg:py-24 ${t.section}`}>
-      <div className="mx-auto max-w-6xl px-5">
+      <div className="mx-auto max-w-[90rem] px-5 lg:px-10">
         {split ? (
           <div className="grid gap-x-12 gap-y-10 lg:grid-cols-12">
             <div
@@ -362,7 +362,7 @@ const PROOF = [
  */
 const ProofStrip = () => (
   <section className="border-b border-cyprus/10 bg-sand-light">
-    <dl className="mx-auto grid max-w-6xl grid-cols-1 gap-x-8 gap-y-9 px-5 py-12 sm:grid-cols-3 lg:py-14">
+    <dl className="mx-auto grid max-w-[90rem] grid-cols-1 gap-x-8 gap-y-9 px-5 py-12 sm:grid-cols-3 lg:px-10 lg:py-14">
       {PROOF.map(({ value, term, label, icon }, i) => (
         <div
           key={value}
@@ -447,7 +447,7 @@ const Home = () => {
           : "border-b border-transparent bg-cyprus-dark"
       }`}
     >
-      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5">
+      <nav className="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5 lg:px-10">
         {/* nowrap: at 375px "DR-XAI Platform" broke across two lines and pushed
             the header to double height. */}
         <Link to={ROUTES.HOME} className="flex min-h-11 items-center gap-2.5 text-white">
@@ -527,7 +527,7 @@ const Home = () => {
           id="site-menu"
           className="animate-auth-rise border-t border-white/10 bg-cyprus-dark lg:hidden"
         >
-          <ul className="mx-auto max-w-6xl px-5 py-2">
+          <ul className="mx-auto max-w-[90rem] px-5 py-2">
             {NAV.map(([label, href]) => (
               <li key={href}>
                 <a
@@ -600,7 +600,7 @@ const Home = () => {
 
         {/* Less top padding below md: the band above already gives the section
             its opening, so the full py-20 left a gap doing nothing. */}
-        <div className="mx-auto max-w-6xl px-5 pb-16 pt-10 md:py-20 lg:py-28">
+        <div className="mx-auto max-w-[90rem] px-5 pb-16 pt-10 md:py-20 lg:px-10 lg:py-28">
           <div className="max-w-[38rem]">
             <p
               data-reveal
@@ -958,7 +958,7 @@ const Home = () => {
       <section className="border-t border-cyprus/10 py-14">
         <div
           data-reveal
-          className="mx-auto flex max-w-6xl flex-col items-start gap-6 rounded-xl bg-cyprus px-8 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10"
+          className="mx-auto flex max-w-[90rem] flex-col items-start gap-6 rounded-xl bg-cyprus px-8 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10"
         >
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
@@ -984,7 +984,7 @@ const Home = () => {
     </main>
 
     <footer className="border-t border-cyprus/10 py-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 text-xs text-ink-soft">
+      <div className="mx-auto flex max-w-[90rem] flex-col gap-2 px-5 text-xs text-ink-soft lg:px-10">
         <div className="flex items-center gap-2 text-cyprus">
           <ShieldCheck size={14} aria-hidden="true" />
           <span className="font-medium">Research instrument — not a medical device</span>
