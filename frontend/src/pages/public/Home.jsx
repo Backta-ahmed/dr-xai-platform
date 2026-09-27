@@ -552,7 +552,18 @@ const Home = () => {
           a boxed image in a column always reads as an illustration bolted on.
           The frame is cropped so the eye lands right of centre and the copy
           gets the calmer side, and the scrim below does the rest. */}
-      <section className="relative isolate overflow-hidden bg-cyprus-dark">
+      {/* Full height from md up, so the first screen is the hero and nothing
+          else. 73px is the sticky header, which sits in the flow above this
+          section — without subtracting it the hero would run a header's worth
+          past the fold and still show a sliver of the band below.
+
+          svh, not vh: on a phone 100vh is the viewport with the browser chrome
+          retracted, so a vh-sized hero is taller than what you can actually
+          see until you scroll. svh is the smaller, always-visible height.
+
+          Below md the hero is a photo band plus copy on solid colour, which
+          already fills a phone; forcing it taller would only add dead space. */}
+      <section className="relative isolate flex flex-col overflow-hidden bg-cyprus-dark md:min-h-[calc(100svh-73px)] md:justify-center">
         {/* Two treatments, because one does not work at both ends.
             
             On md+ the photograph is the section background. On a phone the hero
@@ -600,7 +611,7 @@ const Home = () => {
 
         {/* Less top padding below md: the band above already gives the section
             its opening, so the full py-20 left a gap doing nothing. */}
-        <div className="mx-auto max-w-[90rem] px-5 pb-16 pt-10 md:py-20 lg:px-10 lg:py-28">
+        <div className="mx-auto w-full max-w-[90rem] px-5 pb-16 pt-10 md:py-20 lg:px-10 lg:py-28">
           <div className="max-w-[38rem]">
             <p
               data-reveal
