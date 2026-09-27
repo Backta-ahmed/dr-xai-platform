@@ -22,14 +22,18 @@ gsap.registerPlugin(ScrollTrigger);
  *      normally.
  *   2. Elements are hidden from JavaScript, immediately before the tween that
  *      reveals them — never earlier.
- *   3. A watchdog clears every inline style after FAILSAFE_MS whatever
- *      happened, so a ScrollTrigger that never fires cannot leave content
- *      invisible. Cleanup reverts through the same path.
+ *   3. A watchdog clears the inline style on any target that is on screen and
+ *      still transparent, so a ScrollTrigger that never fires cannot leave
+ *      content invisible. It only ever touches what the reader can already
+ *      see. Cleanup reverts through the same path.
  *
  * Under `prefers-reduced-motion` nothing is hidden and nothing animates.
  */
 
-const FAILSAFE_MS = 4000;
+// How often the watchdog looks, and how long a target must stay stranded
+// before it is rescued. Comfortably longer than one entrance (0.55s) plus the
+// longest stagger on the page, so nothing mid-animation is ever snapped.
+const PATROL_MS = 1500;
 
 export const useReveal = (options = {}) => {
   const scope = useRef(null);
@@ -42,21 +46,47 @@ export const useReveal = (options = {}) => {
     const targets = gsap.utils.toArray(root.querySelectorAll(selector));
     if (targets.length === 0) return undefined;
 
-    // The watchdog is armed before anything is hidden, so every early return
-    // below still ends with the content visible.
-    //
-    // It kills the tweens first. clearProps alone strips the inline style but
-    // leaves the tween running, and the next tick writes the same value back —
+    // Kill before clearing. clearProps alone strips the inline style but leaves
+    // the tween running, and the next tick writes the same value back —
     // observed leaving six hero elements pinned at opacity 0.54 with the
-    // watchdog firing and changing nothing. A hidden tab suspends
-    // requestAnimationFrame, so a tween started on load can freeze part-way and
-    // never complete; setTimeout still fires there, which is why the rescue
-    // hangs off a timer rather than off GSAP.
-    const rescue = () => {
-      gsap.killTweensOf(targets);
-      gsap.set(targets, { clearProps: "opacity,transform,visibility" });
+    // watchdog firing and changing nothing.
+    const clear = (els) => {
+      if (!els.length) return;
+      gsap.killTweensOf(els);
+      gsap.set(els, { clearProps: "opacity,transform,visibility" });
     };
-    const failsafe = window.setTimeout(rescue, FAILSAFE_MS);
+    const rescue = () => clear(targets);
+
+    // A target is stranded if it is on screen and still transparent. Anything
+    // below the fold is deliberately left alone.
+    //
+    // This used to be a single timer that cleared every target four seconds
+    // after mount, on-screen or not. That made the whole page reveal itself on
+    // a stopwatch: scroll slowly and you passed four seconds before arriving
+    // anywhere, so every section was already showing when you got to it, and
+    // only a fast scroll outran it.
+    const onScreen = (el) => {
+      const r = el.getBoundingClientRect();
+      return r.top < window.innerHeight && r.bottom > 0;
+    };
+    const stranded = () =>
+      targets.filter(
+        (el) => onScreen(el) && Number(gsap.getProperty(el, "opacity")) < 0.99
+      );
+
+    // Two strikes. An element waiting its turn in a stagger is briefly on
+    // screen and transparent through no fault of its own, and must not be
+    // snapped visible ahead of its group. One interval is longer than any
+    // entrance plus its stagger, so anything still stranded on the second look
+    // is genuinely stuck — whether ScrollTrigger never fired, or a hidden tab
+    // suspended requestAnimationFrame and froze a tween part-way.
+    let suspects = [];
+    const patrol = () => {
+      const now = stranded();
+      clear(now.filter((el) => suspects.includes(el)));
+      suspects = now;
+    };
+    const failsafe = window.setInterval(patrol, PATROL_MS);
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
@@ -75,7 +105,10 @@ export const useReveal = (options = {}) => {
             stagger,
             scrollTrigger: {
               trigger,
-              start: "top 85%",
+              // The element's top reaching 82% down the viewport, so it has
+              // genuinely started to arrive rather than being animated while
+              // still a screen away.
+              start: "top 82%",
               once: true,
             },
           });
@@ -86,7 +119,7 @@ export const useReveal = (options = {}) => {
     }, root);
 
     return () => {
-      window.clearTimeout(failsafe);
+      window.clearInterval(failsafe);
       ctx.revert();
       // revert() restores what GSAP recorded, but an interrupted context has
       // been seen to leave a target mid-tween. Clearing unconditionally costs
